@@ -15,20 +15,33 @@ export async function GET(request: Request) {
 
     const adminSupabase = createAdminClient()
 
-    // Get primary admin for the tenant
-    const { data: tenantUser, error: tenantUserError } = await adminSupabase
+    // Get primary admin for the tenant, fallback to any admin if primary not found
+    let { data: tenantUser, error: tenantUserError } = await adminSupabase
       .from('tenant_users')
       .select('user_id, role, is_primary_admin')
       .eq('tenant_id', tenantId)
       .eq('is_primary_admin', true)
       .eq('role', 'admin')
-      .single()
+      .maybeSingle()
 
+    // If no primary admin found, get any admin
     if (tenantUserError || !tenantUser) {
-      return NextResponse.json(
-        { error: 'Admin not found for this tenant' },
-        { status: 404 }
-      )
+      const { data: anyAdmin, error: anyAdminError } = await adminSupabase
+        .from('tenant_users')
+        .select('user_id, role')
+        .eq('tenant_id', tenantId)
+        .eq('role', 'admin')
+        .limit(1)
+        .maybeSingle()
+      
+      if (anyAdminError || !anyAdmin) {
+        return NextResponse.json(
+          { error: 'Admin not found for this tenant' },
+          { status: 404 }
+        )
+      }
+      
+      tenantUser = anyAdmin
     }
 
     // Get user details from auth.users

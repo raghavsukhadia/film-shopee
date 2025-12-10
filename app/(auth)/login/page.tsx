@@ -480,16 +480,26 @@ function LoginContent() {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            marginBottom: '1rem'
+            alignItems: 'center',
+            marginBottom: '1rem',
+            width: '100%'
           }}>
-            <Logo size="large" showText={true} variant="dark" />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%'
+            }}>
+              <Logo size="large" showText={true} variant="dark" />
+            </div>
           </div>
           {/* Co-Powered by Zoravo */}
           <div style={{
             fontSize: '0.8125rem',
             color: '#6b7280',
             letterSpacing: '0.02em',
-            marginTop: '0.5rem'
+            marginTop: '0.5rem',
+            textAlign: 'center'
           }}>
             <span style={{ fontWeight: 400 }}>Co-Powered by </span>
             <span style={{ fontWeight: 700 }}>Zoravo</span>

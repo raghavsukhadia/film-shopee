@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { checkUserRole, type UserRole } from '@/lib/rbac'
 import { getWorkspaceUrl, initializeTenantFromWorkspace } from '@/lib/workspace-detector'
 import { getCurrentTenantId } from '@/lib/tenant-context'
+import { safeGetUser, handleAuthError } from '@/lib/auth-error-handler'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -79,8 +80,20 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
     try {
       setLoading(true)
       
-      // Get user from auth
-      const { data: { user } } = await supabase.auth.getUser()
+      // Get user from auth with error handling for refresh token issues
+      const { user, error: userError } = await safeGetUser(
+        supabase,
+        () => {
+          window.location.href = '/login'
+        }
+      )
+      
+      // If error was handled (refresh token error), safeGetUser already redirected
+      if (!user && userError) {
+        console.error('Error getting user:', userError)
+        setLoading(false)
+        return
+      }
       
       if (user) {
         // Check if user is super admin

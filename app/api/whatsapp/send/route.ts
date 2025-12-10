@@ -79,10 +79,51 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function sendViaMessageAutoSender(config: any, to: string, message: string, attachment?: any) {
-  if (!config.apiKey || !config.userId || !config.password) {
-    return NextResponse.json({ error: 'MessageAutoSender configuration is incomplete' }, { status: 400 })
+/**
+ * Validate MessageAutoSender configuration
+ */
+function validateMessageAutoSenderConfig(config: any): { valid: boolean; error?: string } {
+  if (!config) {
+    return { valid: false, error: 'Configuration is missing' }
   }
+
+  const missing = []
+  if (!config.apiKey) missing.push('API Key')
+  if (!config.userId) missing.push('User ID')
+  if (!config.password) missing.push('Password')
+
+  if (missing.length > 0) {
+    return { 
+      valid: false, 
+      error: `MessageAutoSender configuration is incomplete. Missing: ${missing.join(', ')}` 
+    }
+  }
+
+  // Validate that credentials are not empty strings
+  if (typeof config.apiKey === 'string' && config.apiKey.trim() === '') {
+    return { valid: false, error: 'API Key cannot be empty' }
+  }
+  if (typeof config.userId === 'string' && config.userId.trim() === '') {
+    return { valid: false, error: 'User ID cannot be empty' }
+  }
+  if (typeof config.password === 'string' && config.password.trim() === '') {
+    return { valid: false, error: 'Password cannot be empty' }
+  }
+
+  return { valid: true }
+}
+
+async function sendViaMessageAutoSender(config: any, to: string, message: string, attachment?: any) {
+  // Validate configuration
+  const validation = validateMessageAutoSenderConfig(config)
+  if (!validation.valid) {
+    return NextResponse.json({ 
+      success: false,
+      error: validation.error || 'Invalid configuration'
+    }, { status: 400 })
+  }
+
+  console.log('[WhatsApp API] MessageAutoSender config validation passed')
 
   try {
     // First, send the text message
@@ -217,10 +258,24 @@ async function sendTextMessage(config: any, to: string, message: string) {
       return attempt4.response
     }
 
-    // If all methods failed, return the last error
+    // If all methods failed, return detailed error
+    const errorDetails = {
+      method1: attempt1.status,
+      method2: attempt2.status,
+      method3: attempt3.status,
+      method4: attempt4.status,
+    }
+    
+    console.error('[WhatsApp API] All authentication methods failed:', errorDetails)
+    
     return NextResponse.json({ 
       success: false, 
-      error: 'Authentication failed with all methods. Please verify your API Key, User ID, and Password are correct. Check MessageAutoSender documentation for the correct authentication format.' 
+      error: 'Authentication failed with all methods. Please verify your API Key, User ID, and Password are correct. Check MessageAutoSender documentation for the correct authentication format.',
+      details: {
+        message: 'All 4 authentication methods (x-api-key header, Basic Auth, API key query param, username/password in body) failed.',
+        suggestion: 'Please verify: 1) API Key is correct, 2) User ID matches your MessageAutoSender account, 3) Password is correct, 4) Your account is active and has credits.',
+        apiUrl: apiUrl
+      }
     }, { status: 401 })
 }
 
@@ -292,9 +347,15 @@ async function trySendMessage(
   config: any, 
   headers: Record<string, string>,
   payload: Record<string, any>
-): Promise<{ response: NextResponse, success: boolean, status: number }> {
+): Promise<{ response: NextResponse, success: boolean, status: number, error?: string }> {
   try {
     console.log('[WhatsApp API] Trying with headers:', Object.keys(headers))
+    console.log('[WhatsApp API] Payload (sanitized):', { 
+      receiverMobileNo: payload.receiverMobileNo, 
+      messageLength: payload.message?.[0]?.length || 0,
+      hasUsername: !!payload.username,
+      hasPassword: !!payload.password
+    })
     
     const fetchResponse = await fetch(apiUrl, {
       method: 'POST',
@@ -303,23 +364,43 @@ async function trySendMessage(
     })
 
     const responseText = await fetchResponse.text()
-    console.log('[WhatsApp API] Response status:', fetchResponse.status, 'Response:', responseText)
+    console.log('[WhatsApp API] Response status:', fetchResponse.status)
+    console.log('[WhatsApp API] Response body:', responseText.substring(0, 500)) // Limit log size
 
     if (!fetchResponse.ok) {
       let errorData
+      let errorMessage = 'Failed to send message'
+      
       try {
         errorData = JSON.parse(responseText)
+        errorMessage = errorData.message || errorData.error || errorData.detail || responseText || errorMessage
       } catch {
-        errorData = { message: responseText || 'Failed to send message' }
+        errorMessage = responseText || `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`
       }
+      
+      // Provide more specific error messages
+      if (fetchResponse.status === 401 || fetchResponse.status === 403) {
+        errorMessage = `Authentication failed: ${errorMessage}. Please check your API Key, User ID, and Password.`
+      } else if (fetchResponse.status === 400) {
+        errorMessage = `Invalid request: ${errorMessage}. Please check the phone number format and message content.`
+      } else if (fetchResponse.status === 404) {
+        errorMessage = `API endpoint not found: ${errorMessage}. Please verify the webhook URL is correct.`
+      }
+      
+      console.error('[WhatsApp API] Request failed:', {
+        status: fetchResponse.status,
+        error: errorMessage,
+        url: apiUrl
+      })
       
       return {
         response: NextResponse.json({ 
           success: false, 
-          error: errorData.message || errorData.error || `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}` 
+          error: errorMessage
         }, { status: fetchResponse.status }),
         success: false,
-        status: fetchResponse.status
+        status: fetchResponse.status,
+        error: errorMessage
       }
     }
 

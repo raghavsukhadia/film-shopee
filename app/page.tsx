@@ -188,7 +188,12 @@ function LandingPageContent() {
   ]
 
   return (
-    <div style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ 
+      fontFamily: 'Inter, system-ui, sans-serif',
+      width: '100%',
+      overflowX: 'hidden',
+      minHeight: '100vh'
+    }}>
       <style jsx global>{`
         @keyframes float {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
@@ -209,6 +214,123 @@ function LandingPageContent() {
           0%, 100% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
         }
+        
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+          .hero-grid {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+          }
+          .hero-content {
+            text-align: left !important;
+          }
+          .dashboard-preview {
+            max-width: 100% !important;
+            order: -1 !important;
+          }
+        }
+        
+        @media (max-width: 640px) {
+          .hero-content {
+            text-align: center !important;
+          }
+          .hero-content > div:first-child {
+            justify-content: center !important;
+            align-items: center !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          nav > div {
+            padding: 0 1rem !important;
+            flex-wrap: wrap !important;
+          }
+          nav .nav-buttons {
+            flex-wrap: wrap !important;
+            gap: 0.5rem !important;
+            margin-top: 0.5rem !important;
+          }
+          nav .nav-buttons button,
+          nav .nav-buttons a {
+            min-width: auto !important;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.75rem !important;
+          }
+          .hero-section {
+            padding-top: 8rem !important;
+            min-height: auto !important;
+            padding-bottom: 3rem !important;
+          }
+          .hero-grid {
+            padding: 0 1rem !important;
+            gap: 2rem !important;
+          }
+          .hero-content h1 {
+            font-size: 2rem !important;
+            line-height: 1.2 !important;
+          }
+          .hero-content p {
+            font-size: 1rem !important;
+          }
+          .dashboard-preview {
+            padding: 1.5rem !important;
+          }
+          .dashboard-preview > div > div {
+            grid-template-columns: 1fr !important;
+          }
+          .hero-content button {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .hero-content > div:first-child {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+          }
+          .features-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 1.5rem !important;
+          }
+          section {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+          }
+          h2 {
+            font-size: 2rem !important;
+          }
+          h3 {
+            font-size: 1.25rem !important;
+          }
+          footer > div > div:first-child {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+          }
+          footer > div > div:first-child > div {
+            align-items: center !important;
+            text-align: center !important;
+          }
+          footer > div > div:last-child {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 1rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .stats-grid {
+            grid-template-columns: 1fr !important;
+          }
+          nav .logo-container {
+            flex-direction: row !important;
+            align-items: center !important;
+          }
+          nav .logo-container > div:first-child {
+            margin-right: 0.5rem !important;
+          }
+        }
       `}</style>
       {/* Sticky Navigation */}
       <nav style={{
@@ -222,7 +344,8 @@ function LandingPageContent() {
         borderBottom: '1px solid #e5e7eb',
         padding: isScrolled ? '0.75rem 0' : '1rem 0',
         boxShadow: isScrolled ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        width: '100%'
       }}>
         <div style={{
           maxWidth: '1400px',
@@ -230,22 +353,40 @@ function LandingPageContent() {
           padding: '0 2rem',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.25rem' }}>
-            <Logo size="medium" showText={true} variant="dark" />
+          <div className="logo-container" style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'flex-start', 
+            gap: '0.25rem',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+              <Logo size="medium" showText={true} variant="dark" />
+            </div>
             <div style={{
               fontSize: '0.6875rem',
               color: '#6b7280',
               letterSpacing: '0.02em',
-              marginTop: '0.125rem'
+              marginTop: '0.125rem',
+              textAlign: 'left'
             }}>
               <span style={{ fontWeight: 400 }}>Co-Powered by </span>
               <span style={{ fontWeight: 700 }}>Zoravo</span>
             </div>
           </div>
           
-          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <div className="nav-buttons" style={{ 
+            display: 'flex', 
+            gap: '0.75rem', 
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end'
+          }}>
             <button
               onClick={() => router.push('/login')}
               style={{
@@ -374,14 +515,16 @@ function LandingPageContent() {
       </nav>
 
       {/* Hero Section */}
-      <section style={{
+      <section className="hero-section" style={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #f8fafc 100%)',
         display: 'flex',
         alignItems: 'center',
-        paddingTop: '5rem',
+        paddingTop: '7rem',
+        paddingBottom: '3rem',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        width: '100%'
       }}>
         {/* Enhanced Background with Gradient and Animated Elements */}
         <div style={{
@@ -421,7 +564,7 @@ function LandingPageContent() {
         }}>
           <BarChart3 style={{ width: '100%', height: '100%', color: '#f97316' }} />
         </div>
-        <div style={{
+        <div className="hero-grid" style={{
           maxWidth: '1200px',
           margin: '0 auto',
           padding: '0 2rem',
@@ -430,10 +573,14 @@ function LandingPageContent() {
           gap: '4rem',
           alignItems: 'center',
           position: 'relative',
-          zIndex: 1
+          zIndex: 1,
+          width: '100%'
         }}>
           {/* Left Content */}
-          <div style={{ animation: 'fadeInUp 0.8s ease-out' }}>
+          <div className="hero-content" style={{ 
+            animation: 'fadeInUp 0.8s ease-out',
+            width: '100%'
+          }}>
             {/* Social Proof with Partner Logos */}
             <div style={{
               display: 'flex',
@@ -484,12 +631,13 @@ function LandingPageContent() {
             </div>
             
             <h1 style={{
-              fontSize: '3.75rem',
+              fontSize: 'clamp(2rem, 5vw, 3.75rem)',
               fontWeight: '800',
               color: '#0f172a',
               margin: '0 0 1.5rem 0',
               lineHeight: '1.1',
-              letterSpacing: '-0.03em'
+              letterSpacing: '-0.03em',
+              width: '100%'
             }}>
               Zoravo OMS — The Complete
               <br />
@@ -503,20 +651,22 @@ function LandingPageContent() {
               </span>
             </h1>
             <p style={{
-              fontSize: '1.375rem',
+              fontSize: 'clamp(1.125rem, 2.5vw, 1.375rem)',
               color: '#475569',
               margin: '0 0 1rem 0',
               lineHeight: '1.7',
-              fontWeight: '500'
+              fontWeight: '500',
+              width: '100%'
             }}>
               Streamline Your Car Accessories Business — From Job Intake to Delivery, Seamlessly.
             </p>
             <p style={{
-              fontSize: '1.125rem',
+              fontSize: 'clamp(1rem, 2vw, 1.125rem)',
               color: '#64748b',
               margin: '0 0 2rem 0',
               lineHeight: '1.7',
-              fontWeight: '400'
+              fontWeight: '400',
+              width: '100%'
             }}>
               Manage jobs, track vehicles, and get paid faster with one powerful system. Run your operations with <strong style={{ color: '#1e293b' }}>speed, clarity, and complete control</strong>.
             </p>
@@ -558,23 +708,32 @@ function LandingPageContent() {
               ))}
             </div>
             
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              marginBottom: '2rem', 
+              flexWrap: 'wrap',
+              width: '100%'
+            }}>
               <button
                 onClick={() => setShowCreateAccount(true)}
                 style={{
-                  padding: '1rem 2.5rem',
+                  padding: 'clamp(0.875rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2.5rem)',
                   background: 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '0.75rem',
                   fontWeight: '700',
-                  fontSize: '1.125rem',
+                  fontSize: 'clamp(1rem, 2vw, 1.125rem)',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.75rem',
-                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)'
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+                  width: '100%',
+                  maxWidth: '300px',
+                  justifyContent: 'center'
                 }}
                 onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
@@ -598,18 +757,21 @@ function LandingPageContent() {
                   }
                 }}
                 style={{
-                  padding: '1rem 2rem',
+                  padding: 'clamp(0.875rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem)',
                   backgroundColor: 'white',
                   color: '#f59e0b',
                   border: '1.5px solid #f59e0b',
                   borderRadius: '0.75rem',
                   fontWeight: '600',
-                  fontSize: '1rem',
+                  fontSize: 'clamp(0.875rem, 2vw, 1rem)',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.75rem'
+                  gap: '0.75rem',
+                  width: '100%',
+                  maxWidth: '300px',
+                  justifyContent: 'center'
                 }}
                 onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.currentTarget.style.backgroundColor = '#fef3c7'
@@ -634,6 +796,7 @@ function LandingPageContent() {
           {/* Right Content - Dashboard Preview */}
           <div 
             id="dashboard-preview"
+            className="dashboard-preview"
             style={{
               position: 'relative',
               backgroundColor: 'white',
@@ -642,7 +805,10 @@ function LandingPageContent() {
               border: '1px solid #e5e7eb',
               boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
               animation: 'fadeInUp 1s ease-out 0.3s both',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              width: '100%',
+              maxWidth: '100%',
+              overflow: 'hidden'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)'
@@ -683,7 +849,13 @@ function LandingPageContent() {
                 </div>
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(2, 1fr)', 
+                gap: '1.25rem', 
+                marginBottom: '2rem',
+                width: '100%'
+              }}>
                 {[
                   { label: 'Vehicles in Workshop', value: '12', color: '#f59e0b', icon: Car, bgGradient: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' },
                   { label: 'Jobs in Progress', value: '8', color: '#059669', icon: Wrench, bgGradient: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' },
@@ -818,20 +990,22 @@ function LandingPageContent() {
         }}>
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <h2 style={{
-              fontSize: '2.5rem',
+              fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
               fontWeight: '800',
               color: '#0f172a',
               margin: '0 0 0.75rem 0',
-              letterSpacing: '-0.02em'
+              letterSpacing: '-0.02em',
+              padding: '0 1rem'
             }}>
               Everything You Need to Manage Your Business
             </h2>
             <p style={{
-              fontSize: '1.125rem',
+              fontSize: 'clamp(1rem, 2vw, 1.125rem)',
               color: '#64748b',
               maxWidth: '700px',
               margin: '0 auto',
-              lineHeight: '1.6'
+              lineHeight: '1.6',
+              padding: '0 1rem'
             }}>
               Our comprehensive platform provides all the tools you need to efficiently manage 
               your car accessories business from start to finish.
@@ -853,7 +1027,7 @@ function LandingPageContent() {
                 Core Modules
               </h3>
             </div>
-            <div style={{
+            <div className="features-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '2rem'
@@ -931,7 +1105,7 @@ function LandingPageContent() {
                 Growth Tools
               </h3>
             </div>
-            <div style={{
+            <div className="features-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '2rem'
@@ -1008,7 +1182,7 @@ function LandingPageContent() {
                 Team Tools
               </h3>
             </div>
-            <div style={{
+            <div className="features-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '2rem'
@@ -1077,7 +1251,7 @@ function LandingPageContent() {
         padding: '4rem 2rem',
         backgroundColor: '#f8fafc'
       }}>
-        <div style={{
+        <div className="stats-grid" style={{
           maxWidth: '1200px',
           margin: '0 auto',
           display: 'grid',
@@ -1209,8 +1383,9 @@ function LandingPageContent() {
           {/* Contact Information */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2rem'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '2rem',
+            width: '100%'
           }}>
             <div style={{
               padding: '2rem',
@@ -1426,30 +1601,42 @@ function LandingPageContent() {
       <section style={{
         padding: '4rem 2rem',
         backgroundColor: '#0f172a',
-        color: 'white'
+        color: 'white',
+        width: '100%',
+        overflow: 'hidden'
       }}>
         <div style={{
           maxWidth: '800px',
           margin: '0 auto',
-          textAlign: 'center'
+          textAlign: 'center',
+          width: '100%'
         }}>
           <h2 style={{
-            fontSize: '2.25rem',
+            fontSize: 'clamp(1.75rem, 4vw, 2.25rem)',
             fontWeight: 'bold',
-            margin: '0 0 1rem 0'
+            margin: '0 0 1rem 0',
+            padding: '0 1rem'
           }}>
             Ready to Transform Your Business?
           </h2>
           <p style={{
-            fontSize: '1rem',
+            fontSize: 'clamp(0.9375rem, 2vw, 1rem)',
             color: 'rgba(255,255,255,0.9)',
             margin: '0 0 1.5rem 0',
-            lineHeight: '1.6'
+            lineHeight: '1.6',
+            padding: '0 1rem'
           }}>
             Join hundreds of car accessories businesses already using Zoravo OMS 
             to streamline their operations and grow their revenue.
           </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: '1rem', 
+            justifyContent: 'center', 
+            flexWrap: 'wrap',
+            width: '100%',
+            padding: '0 1rem'
+          }}>
             <button
               onClick={() => setShowCreateAccount(true)}
               style={{
@@ -1519,30 +1706,40 @@ function LandingPageContent() {
         }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '3rem',
             marginBottom: '3rem',
-            paddingBottom: '3rem'
+            paddingBottom: '3rem',
+            alignItems: 'flex-start'
           }}>
             {/* Brand Column */}
-            <div>
-              <Logo size="medium" showText={true} variant="light" />
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              minWidth: '250px'
+            }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <Logo size="medium" showText={true} variant="light" />
+              </div>
               <p style={{
-                margin: '1rem 0 0 0',
+                margin: '0 0 1rem 0',
                 fontSize: '0.9375rem',
                 color: '#9ca3af',
                 lineHeight: '1.7',
-                maxWidth: '300px'
+                maxWidth: '100%',
+                textAlign: 'left'
               }}>
                 Zoravo OMS – Empowering Car Accessories Businesses Since 2024.
               </p>
               
-              {/* Co-Powered by Filmshoppee */}
+              {/* Co-Powered by Zoravo */}
               <div style={{
-                marginTop: '1rem',
+                marginBottom: '1.5rem',
                 fontSize: '0.75rem',
                 color: '#6b7280',
-                letterSpacing: '0.02em'
+                letterSpacing: '0.02em',
+                textAlign: 'left'
               }}>
                 <span style={{ fontWeight: 400 }}>Co-Powered by </span>
                 <span style={{ fontWeight: 600, color: '#9ca3af' }}>Zoravo</span>
@@ -1551,7 +1748,8 @@ function LandingPageContent() {
               <div style={{
                 display: 'flex',
                 gap: '1rem',
-                marginTop: '1.5rem'
+                alignItems: 'center',
+                flexWrap: 'wrap'
               }}>
                 <a
                   href="https://www.instagram.com/filmshoppee"
@@ -1638,19 +1836,26 @@ function LandingPageContent() {
             </div>
 
             {/* Company Links */}
-            <div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start'
+            }}>
               <h4 style={{
                 fontSize: '1rem',
                 fontWeight: '700',
                 color: 'white',
-                margin: '0 0 1rem 0'
+                margin: '0 0 1rem 0',
+                textAlign: 'left'
               }}>
                 Company
               </h4>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem'
+                gap: '0.75rem',
+                alignItems: 'flex-start',
+                width: '100%'
               }}>
                 <a
                   href="/about"
@@ -1724,19 +1929,26 @@ function LandingPageContent() {
             </div>
 
             {/* Product Links */}
-            <div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start'
+            }}>
               <h4 style={{
                 fontSize: '1rem',
                 fontWeight: '700',
                 color: 'white',
-                margin: '0 0 1rem 0'
+                margin: '0 0 1rem 0',
+                textAlign: 'left'
               }}>
                 Product
               </h4>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem'
+                gap: '0.75rem',
+                alignItems: 'flex-start',
+                width: '100%'
               }}>
                 {['Features', 'Modules', 'Integrations', 'API', 'Roadmap'].map((link) => (
                   <a
@@ -1762,19 +1974,26 @@ function LandingPageContent() {
             </div>
 
             {/* Resources Links */}
-            <div>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start'
+            }}>
               <h4 style={{
                 fontSize: '1rem',
                 fontWeight: '700',
                 color: 'white',
-                margin: '0 0 1rem 0'
+                margin: '0 0 1rem 0',
+                textAlign: 'left'
               }}>
                 Resources
               </h4>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem'
+                gap: '0.75rem',
+                alignItems: 'flex-start',
+                width: '100%'
               }}>
                 {['Blog', 'Case Studies', 'Help Center', 'Community', 'Status'].map((link) => (
                   <a
@@ -1806,12 +2025,17 @@ function LandingPageContent() {
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingTop: '1.5rem',
-            borderTop: '1px solid rgba(255,255,255,0.1)'
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            flexWrap: 'wrap',
+            gap: '1rem'
           }}>
             <p style={{
               margin: 0,
               fontSize: '0.875rem',
-              color: '#6b7280'
+              color: '#6b7280',
+              textAlign: 'left',
+              flex: '1 1 auto',
+              minWidth: '200px'
             }}>
               © 2025 Zoravo OMS. All rights reserved.
             </p>
@@ -1819,10 +2043,12 @@ function LandingPageContent() {
               display: 'flex',
               gap: '2rem',
               fontSize: '0.875rem',
-              color: '#6b7280'
+              color: '#6b7280',
+              flexWrap: 'wrap',
+              alignItems: 'center'
             }}>
-              <a href="#" style={{ color: '#6b7280', textDecoration: 'none' }}>Privacy Policy</a>
-              <a href="#" style={{ color: '#6b7280', textDecoration: 'none' }}>Terms of Service</a>
+              <a href="#" style={{ color: '#6b7280', textDecoration: 'none', whiteSpace: 'nowrap' }}>Privacy Policy</a>
+              <a href="#" style={{ color: '#6b7280', textDecoration: 'none', whiteSpace: 'nowrap' }}>Terms of Service</a>
             </div>
           </div>
         </div>

@@ -203,28 +203,91 @@ export default function AdminDashboard() {
       // Fetch admin details for each tenant
       const transformedTenants = await Promise.all(
         tenantsData.map(async (tenant: any) => {
-          // Find primary admin
-          const { data: tenantUsersData } = await supabase
-            .from('tenant_users')
-            .select('user_id, role, is_primary_admin')
-            .eq('tenant_id', tenant.id)
-            .eq('role', 'admin')
-            .eq('is_primary_admin', true)
-            .limit(1)
-            .maybeSingle()
-
           let adminDetails = null
-          if (tenantUsersData?.user_id) {
-            try {
-              const adminResponse = await fetch(
-                `/api/admin/tenant-details?tenantId=${tenant.id}`
-              )
-              if (adminResponse.ok) {
-                const adminData = await adminResponse.json()
-                adminDetails = adminData.admin
+          
+          try {
+            // Try to fetch admin details via API
+            const adminResponse = await fetch(
+              `/api/admin/tenant-details?tenantId=${tenant.id}`
+            )
+            
+            if (adminResponse.ok) {
+              const adminData = await adminResponse.json()
+              adminDetails = adminData.admin
+            } else {
+              // If API fails, try to get admin info directly
+              console.warn(`API failed for tenant ${tenant.id}, trying direct query`)
+              
+              // Find primary admin first
+              let { data: tenantUsersData } = await supabase
+                .from('tenant_users')
+                .select('user_id, role, is_primary_admin')
+                .eq('tenant_id', tenant.id)
+                .eq('role', 'admin')
+                .eq('is_primary_admin', true)
+                .limit(1)
+                .maybeSingle()
+
+              // If no primary admin, get any admin
+              if (!tenantUsersData) {
+                const { data: anyAdmin } = await supabase
+                  .from('tenant_users')
+                  .select('user_id, role')
+                  .eq('tenant_id', tenant.id)
+                  .eq('role', 'admin')
+                  .limit(1)
+                  .maybeSingle()
+                tenantUsersData = anyAdmin
               }
-            } catch (err) {
-              console.error('Error fetching admin details:', err)
+
+              // If we found an admin user, get their profile
+              if (tenantUsersData?.user_id) {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('id, name, email, phone_number')
+                  .eq('id', tenantUsersData.user_id)
+                  .maybeSingle()
+
+                if (profile) {
+                  adminDetails = {
+                    id: profile.id,
+                    email: profile.email || 'N/A',
+                    name: profile.name || 'N/A',
+                    phone: profile.phone_number || 'N/A'
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error(`Error fetching admin details for tenant ${tenant.id}:`, err)
+            // Try fallback: get admin from profiles directly
+            try {
+              const { data: tenantUsersData } = await supabase
+                .from('tenant_users')
+                .select('user_id')
+                .eq('tenant_id', tenant.id)
+                .eq('role', 'admin')
+                .limit(1)
+                .maybeSingle()
+
+              if (tenantUsersData?.user_id) {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('id, name, email, phone_number')
+                  .eq('id', tenantUsersData.user_id)
+                  .maybeSingle()
+
+                if (profile) {
+                  adminDetails = {
+                    id: profile.id,
+                    email: profile.email || 'N/A',
+                    name: profile.name || 'N/A',
+                    phone: profile.phone_number || 'N/A'
+                  }
+                }
+              }
+            } catch (fallbackErr) {
+              console.error('Fallback also failed:', fallbackErr)
             }
           }
 
@@ -559,13 +622,15 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: '0.75rem', color: '#9ca3af', fontFamily: 'monospace' }}>
                               ID: {tenant.admin.id.substring(0, 8)}...
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.25rem' }}>
-                              ✓ Password Set
-                            </div>
+                            {tenant.admin.password_set !== false && (
+                              <div style={{ fontSize: '0.75rem', color: '#059669', marginTop: '0.25rem' }}>
+                                ✓ Password Set
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
-                            Loading...
+                            No admin found
                           </div>
                         )}
                       </td>

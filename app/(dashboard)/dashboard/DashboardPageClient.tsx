@@ -10,6 +10,7 @@ import VehicleDetailsModal from '@/components/VehicleDetailsModal'
 import { createClient } from '@/lib/supabase/client'
 import { notificationWorkflow } from '@/lib/notification-workflow'
 import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import { formatMakeModel, isUUID } from '@/lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 
@@ -126,7 +127,7 @@ export default function DashboardPageClient() {
         .select('id, name, color')
       if (departments) {
         const deptsMap = new Map(departments.map(dept => [dept.id, dept.name]))
-        const colorsMap = new Map(departments.map(dept => [dept.id, dept.color || '#3b82f6']))
+        const colorsMap = new Map(departments.map(dept => [dept.id, dept.color || '#1e40af']))
         setDepartmentNames(deptsMap)
         setDepartmentColors(colorsMap)
       }
@@ -1279,7 +1280,7 @@ export default function DashboardPageClient() {
                               <div>
                                 <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.375rem' }}>Model</div>
                                 <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                                  {vehicle.make} {vehicle.model}
+                                  {formatMakeModel(vehicle.make, vehicle.model)}
                                 </div>
                               </div>
                               <div>
@@ -1297,7 +1298,7 @@ export default function DashboardPageClient() {
                               <div>
                                 <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.375rem' }}>Vehicle Type</div>
                                 <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                                  {(vehicle.vehicle_type && vehicleTypeNames.get(vehicle.vehicle_type)) || vehicle.vehicle_type || 'N/A'}
+                                  {(vehicle.vehicle_type && vehicleTypeNames.get(vehicle.vehicle_type)) || (vehicle.vehicle_type && isUUID(vehicle.vehicle_type) ? 'Not Specified' : vehicle.vehicle_type) || 'N/A'}
                                 </div>
                               </div>
                               {(vehicle as any).assigned_manager_id && (
@@ -1364,6 +1365,25 @@ export default function DashboardPageClient() {
                                       const isInstaller = userRole === 'installer'
                                       const isUpdating = updatingProductStatus.has(vehicle.id)
                                       
+                                      // Helper function to darken a hex color
+                                      const darkenColor = (hex: string, percent: number = 30): string => {
+                                        // Remove # if present
+                                        hex = hex.replace('#', '')
+                                        
+                                        // Convert to RGB
+                                        const r = parseInt(hex.substring(0, 2), 16)
+                                        const g = parseInt(hex.substring(2, 4), 16)
+                                        const b = parseInt(hex.substring(4, 6), 16)
+                                        
+                                        // Darken by reducing RGB values
+                                        const darkenedR = Math.max(0, Math.floor(r * (1 - percent / 100)))
+                                        const darkenedG = Math.max(0, Math.floor(g * (1 - percent / 100)))
+                                        const darkenedB = Math.max(0, Math.floor(b * (1 - percent / 100)))
+                                        
+                                        // Convert back to hex
+                                        return `#${darkenedR.toString(16).padStart(2, '0')}${darkenedG.toString(16).padStart(2, '0')}${darkenedB.toString(16).padStart(2, '0')}`
+                                      }
+                                      
                                       const hexToRgba = (hex: string, opacity: number) => {
                                         const r = parseInt(hex.slice(1, 3), 16)
                                         const g = parseInt(hex.slice(3, 5), 16)
@@ -1393,9 +1413,12 @@ export default function DashboardPageClient() {
                                               const isCompleted = completedIndices.has(idx)
                                               const canToggle = isInstaller && !isUpdating && 
                                                 (vehicle.status === 'pending' || vehicle.status === 'in_progress' || vehicle.status === 'under_installation')
-                                              const departmentColor = departmentColors.get(product.department) || '#3b82f6'
-                                              const bgColor = hexToRgba(departmentColor, 0.08)
-                                              const hoverBgColor = hexToRgba(departmentColor, 0.15)
+                                              const baseColor = departmentColors.get(product.department) || '#1e40af'
+                                              // Darken the color for better visibility from distance
+                                              const departmentColor = darkenColor(baseColor, 25)
+                                              // Use higher opacity for better contrast
+                                              const bgColor = hexToRgba(departmentColor, 0.12)
+                                              const hoverBgColor = hexToRgba(departmentColor, 0.20)
                                               
                                               return (
                                                 <tr 
@@ -1435,10 +1458,11 @@ export default function DashboardPageClient() {
                                                   )}
                                                   <td style={{ 
                                                     padding: '0.75rem 0.5rem',
-                                                    borderLeft: `4px solid ${departmentColor}`,
+                                                    borderLeft: `5px solid ${departmentColor}`,
                                                     fontWeight: isCompleted ? 'normal' : '600',
                                                     textDecoration: isCompleted ? 'line-through' : 'none',
-                                                    color: isCompleted ? '#9ca3af' : '#111827'
+                                                    color: isCompleted ? '#9ca3af' : '#111827',
+                                                    boxShadow: `inset 0 0 0 1px ${hexToRgba(departmentColor, 0.1)}`
                                                   }}>
                                                     {product.product || 'Product'}
                                                   </td>
@@ -1846,7 +1870,7 @@ export default function DashboardPageClient() {
                         <div>
                           <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.375rem' }}>Model</div>
                           <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                            {vehicle.make} {vehicle.model}
+                            {formatMakeModel(vehicle.make, vehicle.model)}
                           </div>
                         </div>
                         <div>
@@ -1930,6 +1954,25 @@ export default function DashboardPageClient() {
                                 const isInstaller = userRole === 'installer'
                                 const isUpdating = updatingProductStatus.has(vehicle.id)
                                 
+                                // Helper function to darken a hex color
+                                const darkenColor = (hex: string, percent: number = 30): string => {
+                                  // Remove # if present
+                                  hex = hex.replace('#', '')
+                                  
+                                  // Convert to RGB
+                                  const r = parseInt(hex.substring(0, 2), 16)
+                                  const g = parseInt(hex.substring(2, 4), 16)
+                                  const b = parseInt(hex.substring(4, 6), 16)
+                                  
+                                  // Darken by reducing RGB values
+                                  const darkenedR = Math.max(0, Math.floor(r * (1 - percent / 100)))
+                                  const darkenedG = Math.max(0, Math.floor(g * (1 - percent / 100)))
+                                  const darkenedB = Math.max(0, Math.floor(b * (1 - percent / 100)))
+                                  
+                                  // Convert back to hex
+                                  return `#${darkenedR.toString(16).padStart(2, '0')}${darkenedG.toString(16).padStart(2, '0')}${darkenedB.toString(16).padStart(2, '0')}`
+                                }
+                                
                                 // Helper function to convert hex to rgba with opacity
                                 const hexToRgba = (hex: string, opacity: number) => {
                                   const r = parseInt(hex.slice(1, 3), 16)
@@ -1960,9 +2003,12 @@ export default function DashboardPageClient() {
                                         const isCompleted = completedIndices.has(idx)
                                         const canToggle = isInstaller && !isUpdating && 
                                           (vehicle.status === 'pending' || vehicle.status === 'in_progress' || vehicle.status === 'under_installation')
-                                        const departmentColor = departmentColors.get(product.department) || '#3b82f6'
-                                        const bgColor = hexToRgba(departmentColor, 0.08)
-                                        const hoverBgColor = hexToRgba(departmentColor, 0.15)
+                                        const baseColor = departmentColors.get(product.department) || '#1e40af'
+                                        // Darken the color for better visibility from distance
+                                        const departmentColor = darkenColor(baseColor, 25)
+                                        // Use higher opacity for better contrast
+                                        const bgColor = hexToRgba(departmentColor, 0.12)
+                                        const hoverBgColor = hexToRgba(departmentColor, 0.20)
                                         
                                         return (
                                           <tr 
@@ -2003,10 +2049,11 @@ export default function DashboardPageClient() {
                                             )}
                                             <td style={{ 
                                               padding: '0.75rem 0.5rem',
-                                              borderLeft: `4px solid ${departmentColor}`,
+                                              borderLeft: `5px solid ${departmentColor}`,
                                               fontWeight: isCompleted ? 'normal' : '600',
                                               textDecoration: isCompleted ? 'line-through' : 'none',
-                                              color: isCompleted ? '#9ca3af' : '#111827'
+                                              color: isCompleted ? '#9ca3af' : '#111827',
+                                              boxShadow: `inset 0 0 0 1px ${hexToRgba(departmentColor, 0.1)}`
                                             }}>
                                               {product.product || 'Product'}
                                             </td>
@@ -2307,7 +2354,7 @@ export default function DashboardPageClient() {
                             <div>
                               <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.375rem' }}>Model</div>
                               <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                                {(inward.make || '') + (inward.model ? ` ${inward.model}` : '') || 'N/A'}
+                                {formatMakeModel(inward.make, inward.model)}
                               </div>
                             </div>
                             <div>
@@ -2319,7 +2366,7 @@ export default function DashboardPageClient() {
                             <div>
                               <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.375rem' }}>Vehicle Type</div>
                               <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                                {inward.vehicle_type ? (vehicleTypeNames.get(inward.vehicle_type) || inward.vehicle_type) : 'N/A'}
+                                {inward.vehicle_type ? (vehicleTypeNames.get(inward.vehicle_type) || (isUUID(inward.vehicle_type) ? 'Not Specified' : inward.vehicle_type)) : 'N/A'}
                               </div>
                             </div>
                             {inward.assigned_manager_id && (
@@ -2525,11 +2572,24 @@ export default function DashboardPageClient() {
                                     <span
                                       style={{
                                         display: 'inline-block',
-                                        width: '8px',
-                                        height: '8px',
+                                        width: '10px',
+                                        height: '10px',
                                         borderRadius: '50%',
-                                        backgroundColor: departmentColors.get(p.department) || '#3b82f6',
-                                        flexShrink: 0
+                                        backgroundColor: (() => {
+                                          const baseColor = departmentColors.get(p.department) || '#3b82f6'
+                                          // Darken color for better visibility
+                                          const hex = baseColor.replace('#', '')
+                                          const r = parseInt(hex.substring(0, 2), 16)
+                                          const g = parseInt(hex.substring(2, 4), 16)
+                                          const b = parseInt(hex.substring(4, 6), 16)
+                                          const darkenedR = Math.max(0, Math.floor(r * 0.75))
+                                          const darkenedG = Math.max(0, Math.floor(g * 0.75))
+                                          const darkenedB = Math.max(0, Math.floor(b * 0.75))
+                                          return `#${darkenedR.toString(16).padStart(2, '0')}${darkenedG.toString(16).padStart(2, '0')}${darkenedB.toString(16).padStart(2, '0')}`
+                                        })(),
+                                        flexShrink: 0,
+                                        border: '1px solid rgba(0,0,0,0.1)',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                                       }}
                                     />
                                     <span style={{ color: '#6b7280', fontSize: '0.8125rem' }}>

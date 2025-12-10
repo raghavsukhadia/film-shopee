@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Settings, User, Bell, Save, Users, Wrench, MapPin, UserCheck, Edit, Trash2, Plus, X, DollarSign, Briefcase, Car, MessageSquare, Smartphone, ToggleLeft, ToggleRight, FileText, Clock, Mail, HelpCircle, CheckCircle, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { safeGetUser } from '@/lib/auth-error-handler'
 import UserManagementModal from '@/components/UserManagementModal'
 import { whatsappService, type WhatsAppConfig } from '@/lib/whatsapp-service'
 import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
@@ -32,7 +33,7 @@ export default function SettingsPageClient() {
   const [editingVehicleType, setEditingVehicleType] = useState<any>(null)
   const [editingDepartment, setEditingDepartment] = useState<any>(null)
   const [vehicleTypeForm, setVehicleTypeForm] = useState({ name: '', is_active: true })
-  const [departmentForm, setDepartmentForm] = useState({ name: '', is_active: true, color: '#3b82f6' })
+  const [departmentForm, setDepartmentForm] = useState({ name: '', is_active: true, color: '#1e40af' })
   
   // Forms for locations
   const [showLocationForm, setShowLocationForm] = useState(false)
@@ -212,7 +213,20 @@ export default function SettingsPageClient() {
   const loadCurrentUser = async () => {
     try {
       const tenantId = getCurrentTenantId()
-      const { data: { user } } = await supabase.auth.getUser()
+      const { user, error: userError } = await safeGetUser(
+        supabase,
+        () => {
+          window.location.href = '/login'
+        }
+      )
+      
+      if (userError || !user) {
+        if (userError) {
+          console.error('Error loading user:', userError)
+        }
+        return
+      }
+      
       if (user) {
         setCurrentUser(user)
         
@@ -953,11 +967,18 @@ export default function SettingsPageClient() {
     try {
       const tenantId = getCurrentTenantId()
       
+      if (!tenantId) {
+        console.warn('No tenant ID found, using default templates')
+        loadDefaultTemplates()
+        return
+      }
+      
       // Query for tenant-specific templates first, then platform defaults
       // RLS policy allows viewing templates where tenant_id matches user's tenant OR tenant_id IS NULL (platform defaults)
       const { data, error } = await supabase
         .from('message_templates')
         .select('*')
+        .eq('tenant_id', tenantId) // Filter by tenant_id
         .order('event_type')
       
       if (error) {
@@ -969,6 +990,7 @@ export default function SettingsPageClient() {
           error.message?.includes('permission denied') ||
           error.message?.includes('new row violates row-level security')
         ) {
+          console.warn('Error fetching message templates (using defaults):', error.code, error.message)
           // Silently use default templates - this is expected if table doesn't exist
           loadDefaultTemplates()
           return
@@ -983,7 +1005,7 @@ export default function SettingsPageClient() {
         setMessageTemplates(data)
         const templateMap = new Map<string, string>()
         data.forEach((template: any) => {
-          templateMap.set(template.event_type, template.template)
+          templateMap.set(template.event_type, template.template || '')
         })
         setTemplateContent(templateMap)
       } else {
@@ -991,6 +1013,7 @@ export default function SettingsPageClient() {
         loadDefaultTemplates()
       }
     } catch (error: any) {
+      console.error('Exception fetching message templates:', error)
       // Silently use default templates on any error
       loadDefaultTemplates()
     }
@@ -1017,37 +1040,63 @@ export default function SettingsPageClient() {
 
       if (!tenantId) {
         alert('Tenant ID not found. Cannot save templates.')
+        setSavingTemplates(false)
         return
       }
 
+      if (templateContent.size === 0) {
+        alert('No templates to save.')
+        setSavingTemplates(false)
+        return
+      }
+
+      const errors: string[] = []
+      let savedCount = 0
+
       for (const [eventType, template] of templateContent.entries()) {
-        const { error } = await supabase
-          .from('message_templates')
-          .upsert(
-            { 
-              tenant_id: tenantId,
-              event_type: eventType, 
-              template: template 
-            }, 
-            { 
-              onConflict: 'tenant_id,event_type' 
-            }
-          )
-        
-        if (error) {
-          throw error
+        try {
+          const { error } = await supabase
+            .from('message_templates')
+            .upsert(
+              { 
+                tenant_id: tenantId,
+                event_type: eventType, 
+                template: template || '' // Ensure template is not undefined
+              }, 
+              { 
+                onConflict: 'tenant_id,event_type' 
+              }
+            )
+          
+          if (error) {
+            console.error(`Error saving template ${eventType}:`, error)
+            errors.push(`${eventType}: ${error.message || 'Unknown error'}`)
+          } else {
+            savedCount++
+          }
+        } catch (err: any) {
+          console.error(`Exception saving template ${eventType}:`, err)
+          errors.push(`${eventType}: ${err.message || 'Unknown error'}`)
         }
       }
 
-      alert('Message templates saved successfully!')
+      // Refresh templates after save
       await fetchMessageTemplates()
+
+      if (errors.length > 0) {
+        alert(`Saved ${savedCount} template(s), but ${errors.length} failed:\n\n${errors.join('\n')}\n\nCheck console for details.`)
+      } else {
+        alert(`✓ Successfully saved ${savedCount} message template(s)!`)
+      }
     } catch (error: any) {
       console.error('Error saving message templates:', error)
       // If table doesn't exist, show helpful message
       if (error.code === '42P01' || error.message?.includes('does not exist')) {
         alert('Message templates table not found. Please run the database migration script: database/10_create_message_templates_table.sql')
+      } else if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+        alert('Permission denied. You may not have permission to save templates. Please contact your administrator.')
       } else {
-        alert(`Failed to save: ${error.message || 'Unknown error'}`)
+        alert(`Failed to save templates: ${error.message || 'Unknown error'}\n\nCheck browser console (F12) for details.`)
       }
     } finally {
       setSavingTemplates(false)
@@ -3431,7 +3480,7 @@ export default function SettingsPageClient() {
                 <button
                   onClick={() => {
                     setEditingDepartment(null)
-                    setDepartmentForm({ name: '', is_active: true, color: '#3b82f6' })
+                    setDepartmentForm({ name: '', is_active: true, color: '#1e40af' })
                     setShowDepartmentForm(true)
                   }}
                   style={{
@@ -3533,7 +3582,7 @@ export default function SettingsPageClient() {
                       />
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                      {['#3b82f6', '#059669', '#dc2626', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'].map((color) => (
+                      {['#1e40af', '#047857', '#991b1b', '#b45309', '#6d28d9', '#be185d', '#0369a1', '#65a30d'].map((color) => (
                         <button
                           key={color}
                           type="button"
@@ -3557,7 +3606,7 @@ export default function SettingsPageClient() {
                       onClick={() => {
                         setShowDepartmentForm(false)
                         setEditingDepartment(null)
-                        setDepartmentForm({ name: '', is_active: true, color: '#3b82f6' })
+                        setDepartmentForm({ name: '', is_active: true, color: '#1e40af' })
                       }}
                       style={{
                         padding: '0.5rem 1rem',
@@ -3632,12 +3681,12 @@ export default function SettingsPageClient() {
                                 style={{
                                   width: '32px',
                                   height: '32px',
-                                  backgroundColor: department.color || '#3b82f6',
+                                  backgroundColor: department.color || '#1e40af',
                                   borderRadius: '0.375rem',
                                   border: '1px solid #e2e8f0',
                                   boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                                 }}
-                                title={department.color || '#3b82f6'}
+                                title={department.color || '#1e40af'}
                               />
                               <span style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace' }}>
                                 {department.color || '#3b82f6'}
@@ -4910,6 +4959,15 @@ export default function SettingsPageClient() {
                                 const updated = new Map(templateContent)
                                 updated.set(templateInfo.event_type, e.target.value)
                                 setTemplateContent(updated)
+                                // Also update messageTemplates state to keep in sync
+                                const updatedTemplates = [...messageTemplates]
+                                const existingIndex = updatedTemplates.findIndex((t: any) => t.event_type === templateInfo.event_type)
+                                if (existingIndex >= 0) {
+                                  updatedTemplates[existingIndex] = { ...updatedTemplates[existingIndex], template: e.target.value }
+                                } else {
+                                  updatedTemplates.push({ event_type: templateInfo.event_type, template: e.target.value })
+                                }
+                                setMessageTemplates(updatedTemplates)
                               }}
                               rows={8}
                               style={{
@@ -4920,7 +4978,8 @@ export default function SettingsPageClient() {
                                 fontSize: '0.875rem',
                                 fontFamily: 'monospace',
                                 outline: 'none',
-                                resize: 'vertical'
+                                resize: 'vertical',
+                                backgroundColor: 'white'
                               }}
                               placeholder="Enter your message template here. Use {{variableName}} for dynamic values."
                             />
@@ -4949,7 +5008,62 @@ export default function SettingsPageClient() {
                                 Cancel
                               </button>
                               <button
-                                onClick={() => setEditingTemplate(null)}
+                                onClick={async () => {
+                                  // Save this specific template immediately
+                                  try {
+                                    const tenantId = getCurrentTenantId()
+                                    if (!tenantId) {
+                                      alert('Tenant ID not found. Cannot save template.')
+                                      return
+                                    }
+
+                                    const templateToSave = templateContent.get(templateInfo.event_type) || ''
+                                    const { error } = await supabase
+                                      .from('message_templates')
+                                      .upsert(
+                                        { 
+                                          tenant_id: tenantId,
+                                          event_type: templateInfo.event_type, 
+                                          template: templateToSave
+                                        }, 
+                                        { 
+                                          onConflict: 'tenant_id,event_type' 
+                                        }
+                                      )
+                                    
+                                    if (error) {
+                                      console.error('Error saving template:', error)
+                                      alert(`Failed to save template: ${error.message || 'Unknown error'}`)
+                                      return
+                                    }
+
+                                    // Update local state
+                                    const updated = [...messageTemplates]
+                                    const existingIndex = updated.findIndex((t: any) => t.event_type === templateInfo.event_type)
+                                    if (existingIndex >= 0) {
+                                      updated[existingIndex] = { ...updated[existingIndex], template: templateToSave }
+                                    } else {
+                                      updated.push({ event_type: templateInfo.event_type, template: templateToSave })
+                                    }
+                                    setMessageTemplates(updated)
+                                    
+                                    setEditingTemplate(null)
+                                    // Show success feedback
+                                    const button = document.activeElement as HTMLElement
+                                    if (button) {
+                                      const originalText = button.textContent
+                                      button.textContent = '✓ Saved!'
+                                      button.style.backgroundColor = '#059669'
+                                      setTimeout(() => {
+                                        button.textContent = originalText
+                                        button.style.backgroundColor = '#2563eb'
+                                      }, 2000)
+                                    }
+                                  } catch (error: any) {
+                                    console.error('Error saving template:', error)
+                                    alert(`Failed to save template: ${error.message || 'Unknown error'}`)
+                                  }
+                                }}
                                 style={{
                                   padding: '0.5rem 1rem',
                                   backgroundColor: '#2563eb',
@@ -4957,10 +5071,11 @@ export default function SettingsPageClient() {
                                   border: 'none',
                                   borderRadius: '0.375rem',
                                   fontSize: '0.875rem',
-                                  cursor: 'pointer'
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s'
                                 }}
                               >
-                                Done Editing
+                                Save Template
                               </button>
                             </div>
                           </div>

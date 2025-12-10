@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, User, Phone, Mail, Car, MapPin, Wrench, DollarSign, Calendar, MessageSquare, Send, Package, Edit } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import VehicleCommentsSection from '@/components/VehicleCommentsSection'
+import { isUUID } from '@/lib/utils'
 
 interface VehicleInward {
   id: string
@@ -90,12 +91,33 @@ export default function VehicleDetailsModal({ vehicle, onClose, onUpdate }: Vehi
 
       // Fetch Vehicle Type Name
       if (vehicle.vehicle_type) {
-        const { data: vehicleTypeData } = await supabase
-          .from('vehicle_types')
-          .select('name')
-          .eq('id', vehicle.vehicle_type)
-          .single()
-        setVehicleTypeName(vehicleTypeData?.name || vehicle.vehicle_type || 'Not Specified')
+        try {
+          const { data: vehicleTypeData, error: vehicleTypeError } = await supabase
+            .from('vehicle_types')
+            .select('name')
+            .eq('id', vehicle.vehicle_type)
+            .single()
+          
+          if (vehicleTypeError || !vehicleTypeData) {
+            // If lookup failed and vehicle_type is a UUID, show "Not Specified"
+            if (isUUID(vehicle.vehicle_type)) {
+              setVehicleTypeName('Not Specified')
+            } else {
+              // If it's not a UUID, it might be a name, use it
+              setVehicleTypeName(vehicle.vehicle_type)
+            }
+          } else {
+            setVehicleTypeName(vehicleTypeData.name || 'Not Specified')
+          }
+        } catch (error) {
+          console.error('Error fetching vehicle type:', error)
+          // If error and vehicle_type is a UUID, show "Not Specified"
+          if (isUUID(vehicle.vehicle_type)) {
+            setVehicleTypeName('Not Specified')
+          } else {
+            setVehicleTypeName(vehicle.vehicle_type)
+          }
+        }
       } else {
         setVehicleTypeName('Not Specified')
       }

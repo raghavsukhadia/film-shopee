@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Printer, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { formatMakeModel, isUUID } from '@/lib/utils'
 
 interface VehicleInward {
   id: string
@@ -132,12 +133,43 @@ export default function JobSheetPrint({ vehicle, onClose }: JobSheetPrintProps) 
 
       // Fetch Vehicle Type Name
       if (vehicle.vehicle_type) {
-        const { data: vehicleTypeData } = await supabase
-          .from('vehicle_types')
-          .select('name')
-          .eq('id', vehicle.vehicle_type)
-          .single()
-        setVehicleTypeName(vehicleTypeData?.name || vehicle.vehicle_type || 'Not Specified')
+        try {
+          // Get tenant ID for filtering if needed
+          const tenantId = typeof window !== 'undefined' ? sessionStorage.getItem('current_tenant_id') : null
+          const isSuper = typeof window !== 'undefined' ? sessionStorage.getItem('is_super_admin') === 'true' : false
+          
+          let query = supabase
+            .from('vehicle_types')
+            .select('name')
+            .eq('id', vehicle.vehicle_type)
+          
+          // Add tenant filter if not super admin
+          if (!isSuper && tenantId) {
+            query = query.eq('tenant_id', tenantId)
+          }
+          
+          const { data: vehicleTypeData, error: vehicleTypeError } = await query.single()
+          
+          if (vehicleTypeError || !vehicleTypeData) {
+            // If lookup failed and vehicle_type is a UUID, show "Not Specified"
+            if (isUUID(vehicle.vehicle_type)) {
+              setVehicleTypeName('Not Specified')
+            } else {
+              // If it's not a UUID, it might be a name, use it
+              setVehicleTypeName(vehicle.vehicle_type)
+            }
+          } else {
+            setVehicleTypeName(vehicleTypeData.name || 'Not Specified')
+          }
+        } catch (error) {
+          console.error('Error fetching vehicle type:', error)
+          // If error and vehicle_type is a UUID, show "Not Specified"
+          if (isUUID(vehicle.vehicle_type)) {
+            setVehicleTypeName('Not Specified')
+          } else {
+            setVehicleTypeName(vehicle.vehicle_type)
+          }
+        }
       } else {
         setVehicleTypeName('Not Specified')
       }
@@ -326,7 +358,7 @@ export default function JobSheetPrint({ vehicle, onClose }: JobSheetPrintProps) 
       setProducts([])
     }
   }
-
+  
   const handlePrint = () => {
     if (printRef.current) {
       const printWindow = window.open('', '_blank')
@@ -499,6 +531,74 @@ export default function JobSheetPrint({ vehicle, onClose }: JobSheetPrintProps) 
                   font-size: 8pt;
                   vertical-align: middle;
                 }
+                .combined-info-section {
+                  background: #f8fafc;
+                  padding: 8px;
+                  border-radius: 4px;
+                  margin-bottom: 12px;
+                }
+                .section-title-compressed {
+                  background: #e2e8f0;
+                  padding: 3px 6px;
+                  font-weight: 700;
+                  font-size: 9pt;
+                  color: #1e293b;
+                  border-left: 3px solid #f59e0b;
+                  margin-bottom: 6px;
+                }
+                .info-compressed {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 3px;
+                }
+                .info-row-compressed {
+                  display: flex;
+                  align-items: baseline;
+                  gap: 6px;
+                  font-size: 8pt;
+                }
+                .info-label-compressed {
+                  font-weight: 600;
+                  color: #475569;
+                  font-size: 7.5pt;
+                  white-space: nowrap;
+                  flex-shrink: 0;
+                }
+                .info-value-compressed {
+                  color: #0f172a;
+                  font-size: 8pt;
+                  border-bottom: 1px dotted #cbd5e1;
+                  flex: 1;
+                  min-width: 0;
+                }
+                .info-label-large {
+                  font-weight: 700;
+                  color: #1e293b;
+                  font-size: 12pt;
+                }
+                .products-table-large {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 8px;
+                  font-size: 11pt;
+                  border: 2px solid #cbd5e1;
+                }
+                .products-table-large th {
+                  background: #f1f5f9;
+                  padding: 10px 8px;
+                  text-align: left;
+                  font-weight: 800;
+                  border: 2px solid #cbd5e1;
+                  font-size: 11pt;
+                  color: #1e293b;
+                }
+                .products-table-large td {
+                  padding: 10px 8px;
+                  border: 1px solid #cbd5e1;
+                  font-size: 11pt;
+                  vertical-align: middle;
+                  min-height: 30px;
+                }
                 .status-checkbox {
                   width: 12px;
                   height: 12px;
@@ -507,14 +607,31 @@ export default function JobSheetPrint({ vehicle, onClose }: JobSheetPrintProps) 
                   margin-right: 4px;
                   vertical-align: middle;
                 }
+                .status-checkbox-large {
+                  width: 16px;
+                  height: 16px;
+                  border: 2px solid #f59e0b;
+                  display: inline-block;
+                  margin-right: 6px;
+                  vertical-align: middle;
+                }
                 .status-cell {
                   display: flex;
                   align-items: center;
                   gap: 4px;
                 }
+                .status-cell-large {
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                }
                 .status-text {
                   font-size: 7pt;
                   color: #64748b;
+                }
+                .status-text-large {
+                  font-size: 10pt;
+                  color: #475569;
                 }
                 .footer {
                   margin-top: 12px;
@@ -728,11 +845,22 @@ export default function JobSheetPrint({ vehicle, onClose }: JobSheetPrintProps) 
           <div className="header">
             <div className="header-top">
               <div className="logo-section">
-                <img
-                  src="/filmshoppee-logo.svg"
-                  alt="FILMSHOPPEÉ Logo"
-                  style={{ width: '100px', height: 'auto', flexShrink: 0, objectFit: 'contain' }}
-                />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                  <img
+                    src="/filmshoppee-logo.svg"
+                    alt="FILMSHOPPEÉ Logo"
+                    style={{ width: '100px', height: 'auto', flexShrink: 0, objectFit: 'contain' }}
+                  />
+                  <div style={{ 
+                    fontSize: '7pt', 
+                    color: '#64748b', 
+                    fontWeight: '500',
+                    textAlign: 'center',
+                    lineHeight: '1.2'
+                  }}>
+                    Co-Powered by<br /><span style={{ fontWeight: '700' }}>Zoravo</span>
+                  </div>
+                </div>
               </div>
               <div className="company-header-section">
                 <div className="company-name-main">{companyName}</div>
@@ -757,64 +885,108 @@ export default function JobSheetPrint({ vehicle, onClose }: JobSheetPrintProps) 
             </div>
           </div>
 
-          {/* Vehicle Information */}
-          <div className="section">
-            <div className="section-title">VEHICLE INFORMATION</div>
-            <div className="info-grid">
-              <div className="info-item">
-                <div className="info-label">Registration Number</div>
-                <div className="info-value">{vehicle.registration_number || 'N/A'}</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Make & Model</div>
-                <div className="info-value">{vehicle.make || 'N/A'} {vehicle.model || ''}</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Year</div>
-                <div className="info-value">{vehicle.year || 'N/A'}</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Color</div>
-                <div className="info-value">{vehicle.color || 'N/A'}</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Vehicle Type</div>
-                <div className="info-value">{vehicleTypeName || vehicle.vehicle_type || 'N/A'}</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Odometer Reading</div>
-                <div className="info-value">{vehicle.odometer_reading ? `${vehicle.odometer_reading} km` : 'N/A'}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Customer Information */}
-          <div className="section">
-            <div className="section-title">CUSTOMER INFORMATION</div>
-            <div className="info-grid">
-              <div className="info-item">
-                <div className="info-label">Customer Name</div>
-                <div className="info-value">{vehicle.customer_name || 'N/A'}</div>
-              </div>
-              {vehicle.customer_email && (
-                <div className="info-item">
-                  <div className="info-label">Email Address</div>
-                  <div className="info-value">{vehicle.customer_email}</div>
-                </div>
-              )}
-              {(vehicle.customer_address || vehicle.customer_city) && (
-                <div className="info-item full-width">
-                  <div className="info-label">Address</div>
-                  <div className="info-value">
-                    {[
-                      vehicle.customer_address,
-                      vehicle.customer_city,
-                      vehicle.customer_state,
-                      vehicle.customer_pincode
-                    ].filter(Boolean).join(', ')}
+          {/* Combined Information Section - Compressed */}
+          <div className="section combined-info-section">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '8px' }}>
+              {/* Vehicle Information */}
+              <div>
+                <div className="section-title-compressed">VEHICLE</div>
+                <div className="info-compressed">
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Reg No:</span>
+                    <span className="info-value-compressed">{vehicle.registration_number || 'N/A'}</span>
+                  </div>
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Make & Model:</span>
+                    <span className="info-value-compressed">{formatMakeModel(vehicle.make, vehicle.model)}</span>
+                  </div>
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Year:</span>
+                    <span className="info-value-compressed">{vehicle.year || 'N/A'}</span>
+                  </div>
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Color:</span>
+                    <span className="info-value-compressed">{vehicle.color || 'N/A'}</span>
+                  </div>
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Type:</span>
+                    <span className="info-value-compressed">{vehicleTypeName || 'N/A'}</span>
+                  </div>
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Odometer:</span>
+                    <span className="info-value-compressed">{vehicle.odometer_reading ? `${vehicle.odometer_reading} km` : 'N/A'}</span>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Customer Information */}
+              <div>
+                <div className="section-title-compressed">CUSTOMER</div>
+                <div className="info-compressed">
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Name:</span>
+                    <span className="info-value-compressed">{vehicle.customer_name || 'N/A'}</span>
+                  </div>
+                  {vehicle.customer_email && (
+                    <div className="info-row-compressed">
+                      <span className="info-label-compressed">Email:</span>
+                      <span className="info-value-compressed">{vehicle.customer_email}</span>
+                    </div>
+                  )}
+                  {(vehicle.customer_address || vehicle.customer_city) && (
+                    <div className="info-row-compressed">
+                      <span className="info-label-compressed">Address:</span>
+                      <span className="info-value-compressed">
+                        {[
+                          vehicle.customer_address,
+                          vehicle.customer_city,
+                          vehicle.customer_state,
+                          vehicle.customer_pincode
+                        ].filter(Boolean).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Assignment & Status */}
+              <div>
+                <div className="section-title-compressed">ASSIGNMENT & STATUS</div>
+                <div className="info-compressed">
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Manager:</span>
+                    <span className="info-value-compressed">{managerName}</span>
+                  </div>
+                  {installerName && installerName !== 'Not Assigned' && (
+                    <div className="info-row-compressed">
+                      <span className="info-label-compressed">Installer:</span>
+                      <span className="info-value-compressed">{installerName}</span>
+                    </div>
+                  )}
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Location:</span>
+                    <span className="info-value-compressed">{locationName}</span>
+                  </div>
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Priority:</span>
+                    <span className="info-value-compressed" style={{ textTransform: 'capitalize' }}>
+                      {vehicle.priority || 'Medium'}
+                    </span>
+                  </div>
+                  <div className="info-row-compressed">
+                    <span className="info-label-compressed">Status:</span>
+                    <span className="info-value-compressed" style={{ textTransform: 'capitalize', fontWeight: '600' }}>
+                      {vehicle.status?.replace('_', ' ') || 'Pending'}
+                    </span>
+                  </div>
+                  {vehicle.estimated_completion_date && (
+                    <div className="info-row-compressed">
+                      <span className="info-label-compressed">Completion:</span>
+                      <span className="info-value-compressed">{formatDate(vehicle.estimated_completion_date)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -830,78 +1002,52 @@ export default function JobSheetPrint({ vehicle, onClose }: JobSheetPrintProps) 
               </div>
             )}
             
-            {products.length > 0 && (
-              <div style={{ marginTop: '8px' }}>
-                <div className="info-label" style={{ marginBottom: '4px' }}>Accessories/Products to Install</div>
-                <table className="products-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '5%' }}>#</th>
-                      <th style={{ width: '30%' }}>Product Name</th>
-                      <th style={{ width: '25%' }}>Brand</th>
-                      <th style={{ width: '20%' }}>Department</th>
-                      <th style={{ width: '20%', textAlign: 'left' }}>Status</th>
+            <div style={{ marginTop: '12px' }}>
+              <div className="info-label-large" style={{ marginBottom: '8px', fontWeight: '700', fontSize: '12pt' }}>Accessories/Products to Install</div>
+              <table className="products-table-large">
+                <thead>
+                  <tr>
+                    <th style={{ width: '5%' }}>#</th>
+                    <th style={{ width: '30%' }}>Product Name</th>
+                    <th style={{ width: '25%' }}>Brand</th>
+                    <th style={{ width: '20%' }}>Department</th>
+                    <th style={{ width: '20%', textAlign: 'left' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product: any, index: number) => (
+                    <tr key={index}>
+                      <td style={{ fontWeight: '700', fontSize: '11pt' }}>{index + 1}</td>
+                      <td style={{ fontWeight: '600', fontSize: '11pt' }}>{product.product || 'N/A'}</td>
+                      <td style={{ fontWeight: '600', fontSize: '11pt' }}>{product.brand || 'N/A'}</td>
+                      <td style={{ fontWeight: '600', fontSize: '11pt' }}>{product.department || 'N/A'}</td>
+                      <td>
+                        <div className="status-cell-large">
+                          <div className="status-checkbox-large"></div>
+                          <span className="status-text-large" style={{ fontWeight: '600' }}>Completed</span>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((product: any, index: number) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td>{product.product || 'N/A'}</td>
-                        <td>{product.brand || 'N/A'}</td>
-                        <td>{product.department || 'N/A'}</td>
-                        <td>
-                          <div className="status-cell">
-                            <div className="status-checkbox"></div>
-                            <span className="status-text">Completed</span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Assignment & Status */}
-          <div className="section">
-            <div className="section-title">ASSIGNMENT & STATUS</div>
-            <div className="info-grid">
-              <div className="info-item">
-                <div className="info-label">Assigned Manager</div>
-                <div className="info-value">{managerName}</div>
-              </div>
-              {installerName && installerName !== 'Not Assigned' && (
-                <div className="info-item">
-                  <div className="info-label">Assigned Installer</div>
-                  <div className="info-value">{installerName}</div>
-                </div>
-              )}
-              <div className="info-item">
-                <div className="info-label">Location</div>
-                <div className="info-value">{locationName}</div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Priority</div>
-                <div className="info-value" style={{ textTransform: 'capitalize' }}>
-                  {vehicle.priority || 'Medium'}
-                </div>
-              </div>
-              <div className="info-item">
-                <div className="info-label">Current Status</div>
-                <div className="info-value" style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>
-                  {vehicle.status?.replace('_', ' ') || 'Pending'}
-                </div>
-              </div>
-              {vehicle.estimated_completion_date && (
-                <div className="info-item">
-                  <div className="info-label">Expected Completion</div>
-                  <div className="info-value">{formatDate(vehicle.estimated_completion_date)}</div>
-                </div>
-              )}
+                  ))}
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <tr key={`empty-${i}`}>
+                      <td style={{ fontWeight: '700', fontSize: '11pt' }}>{products.length + i + 1}</td>
+                      <td style={{ fontSize: '11pt', minHeight: '25px' }}>&nbsp;</td>
+                      <td style={{ fontSize: '11pt', minHeight: '25px' }}>&nbsp;</td>
+                      <td style={{ fontSize: '11pt', minHeight: '25px' }}>&nbsp;</td>
+                      <td>
+                        <div className="status-cell-large">
+                          <div className="status-checkbox-large"></div>
+                          <span className="status-text-large" style={{ fontWeight: '600' }}>Completed</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
+
 
           {/* Signature Section */}
           <div className="signature-section">

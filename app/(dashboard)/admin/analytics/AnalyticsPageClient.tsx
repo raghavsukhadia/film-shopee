@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { safeGetUser } from '@/lib/auth-error-handler'
 import {
   BarChart3,
   TrendingUp,
@@ -32,9 +33,17 @@ export default function AnalyticsPageClient() {
       setLoading(true)
       
       // Check if user is authenticated and is super admin
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const { user, error: userError } = await safeGetUser(
+        supabase,
+        () => {
+          window.location.href = '/login'
+        }
+      )
+      
       if (userError || !user) {
-        console.error('User not authenticated:', userError)
+        if (userError) {
+          console.error('User not authenticated:', userError)
+        }
         setStats({
           totalTenants: 0,
           activeTenants: 0,

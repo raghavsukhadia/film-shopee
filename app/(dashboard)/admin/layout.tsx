@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { safeGetUser } from '@/lib/auth-error-handler'
 import {
   LayoutDashboard,
   Building2,
@@ -66,9 +67,17 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const checkAdminAccess = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
+      const { user, error: userError } = await safeGetUser(
+        supabase,
+        () => {
+          router.push('/login')
+        }
+      )
+      
+      if (userError || !user) {
+        if (!userError) {
+          router.push('/login')
+        }
         return
       }
 

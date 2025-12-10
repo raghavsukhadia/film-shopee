@@ -58,9 +58,11 @@ export default function Logo({
     <div 
       className={className}
       style={{
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        width: 'auto',
+        height: 'auto'
       }}
     >
       <Image
@@ -71,7 +73,8 @@ export default function Logo({
         style={{
           objectFit: 'contain',
           maxWidth: '100%',
-          height: 'auto'
+          height: 'auto',
+          display: 'block'
         }}
         priority={size === 'large'}
         onError={() => setImageError(true)}
