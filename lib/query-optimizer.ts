@@ -7,7 +7,7 @@
  * - Prevent N+1 queries
  */
 
-import { createClient } from './supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import { getCurrentTenantId, isSuperAdmin } from './tenant-context'
 import { logger } from './logger'
 
