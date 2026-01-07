@@ -4,7 +4,7 @@
  */
 
 import { whatsappService } from './whatsapp-service'
-import { createAdminClient } from './supabase/admin'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { generateDailyReportPDF, VehicleReportData } from './pdf-service'
 
 export interface DailyReportWhatsAppData {
