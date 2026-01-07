@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import Logo from '@/components/Logo'
+import Image from 'next/image'
 import { CheckCircle, Zap, Users, BarChart3, Shield, HeadphonesIcon, ArrowRight, Clock, Star, TrendingUp, Lock, Sparkles } from 'lucide-react'
 
 interface SubscriptionPlan {
@@ -87,14 +87,62 @@ export default function PricingPageClient() {
       <header style={{
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: '1.5rem 2rem',
+        padding: '1rem 2rem',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e5e7eb'
+        background: 'linear-gradient(to bottom, #ffffff, #fffbef)',
+        borderBottom: '2px solid rgba(245, 158, 11, 0.08)',
+        boxShadow: '0 1px 3px rgba(245, 158, 11, 0.05)'
       }}>
-        <Logo size="medium" showText={true} variant="dark" />
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'flex-start', 
+          gap: '0.375rem',
+          justifyContent: 'center',
+          flexShrink: 0,
+          width: '180px'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            width: '100%',
+            height: '50px',
+            flexShrink: 0
+          }}>
+            <Image
+              src="/logo-nav.jpg"
+              alt="FILMSHOPPEÉ - Car Facelift Studio"
+              width={180}
+              height={50}
+              style={{
+                objectFit: 'contain',
+                width: '100%',
+                height: 'auto',
+                maxHeight: '50px',
+                display: 'block'
+              }}
+              priority
+            />
+          </div>
+          <div style={{
+            fontSize: '0.8125rem',
+            color: '#78716c',
+            letterSpacing: '0.03em',
+            marginTop: '0',
+            textAlign: 'left',
+            lineHeight: '1.5',
+            width: '100%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            <span style={{ fontWeight: 500 }}>Co-Powered by </span>
+            <span style={{ fontWeight: 700, color: '#d97706' }}>Zoravo</span>
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <button
             onClick={() => router.push('/')}

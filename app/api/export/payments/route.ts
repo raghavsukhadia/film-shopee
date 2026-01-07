@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { assertRole, hasApiRouteAccess, UserRole } from '@/lib/rbac'
+import { assertRole, hasApiRouteAccess, UserRole } from '@/lib/helpers/rbac'
 import { exportRateLimiter } from '@/utils/rate-limiter'
 import { generateCSV, formatPaymentsForCSV, formatExpensesForCSV, formatPnLForCSV } from '@/utils/csv'
 

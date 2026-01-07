@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Search, Car, Wrench, DollarSign, FileText, Plus, Filter, Eye, Edit, Trash2, Calendar, Phone, Mail, CheckCircle, Percent, Printer } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import VehicleDetailsModal from './components/VehicleDetailsModal'
-import JobSheetPrint from '@/components/JobSheetPrint'
-import { notificationWorkflow } from '@/lib/notification-workflow'
-import { checkUserRole, canModifyVehicles, canViewReports, type UserRole } from '@/lib/rbac'
-import { exportToExcel, formatCurrency, formatDate, formatDateTime, type ExcelColumn } from '@/lib/excel-export'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import JobSheetPrint from '@/components/shared/JobSheetPrint'
+import { notificationWorkflow } from '@/lib/services/notification-workflow'
+import { checkUserRole, canModifyVehicles, canViewReports, type UserRole } from '@/lib/helpers/rbac'
+import { exportToExcel, formatCurrency, formatDate, formatDateTime, type ExcelColumn } from '@/lib/services/excel-export'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
+import { logger } from '@/lib/utils/logger'
 
 export default function VehiclesPageClient() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -44,10 +45,12 @@ export default function VehiclesPageClient() {
       const tenantId = getCurrentTenantId()
       const isSuper = isSuperAdmin()
       
+      // First fetch sorted by created_at ascending to assign sequential IDs correctly
+      // (oldest entry = Z01, newest entry = Znn)
       let query = supabase
         .from('vehicle_inward')
         .select('*')
-        .order('created_at', { ascending: true }) // Sort ascending to maintain sequential order
+        .order('created_at', { ascending: true })
       
       // Add tenant filter
       if (!isSuper && tenantId) {
@@ -57,15 +60,16 @@ export default function VehiclesPageClient() {
       const { data, error } = await query
 
       if (error) {
-        console.error('Error fetching vehicles:', error)
+        logger.error('Error fetching vehicles', error, 'VehiclesPageClient')
         // Keep mock data if database fails
         return
       }
 
       if (data && data.length > 0) {
         // Map database data to display format with sequential IDs
+        // IDs are assigned based on creation order (oldest = Z01)
         const mappedVehicles = data.map((v: any, index: number) => {
-          // Generate sequential ID: Z01, Z02, Z03, etc.
+          // Generate sequential ID: Z01, Z02, Z03, etc. based on creation order
           const sequentialId = `Z${String(index + 1).padStart(2, '0')}`
           // Parse discount info from notes field
           let hasDiscount = false
@@ -121,13 +125,23 @@ export default function VehiclesPageClient() {
             discountPercentage,
             discountOfferedBy,
             // Store full data for editing
-            fullData: v
+            fullData: v,
+            // Store created_at for sorting
+            created_at: v.created_at
           }
         })
-        setVehicles(mappedVehicles)
+        
+        // Sort by date descending (newest first) for display, while preserving sequential IDs
+        const sortedVehicles = mappedVehicles.sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime()
+          const dateB = new Date(b.created_at).getTime()
+          return dateB - dateA // Descending order (newest first)
+        })
+        
+        setVehicles(sortedVehicles)
       }
     } catch (error) {
-      console.error('Error loading vehicles:', error)
+      logger.error('Error loading vehicles', error, 'VehiclesPageClient')
     }
   }
 
@@ -255,7 +269,7 @@ export default function VehiclesPageClient() {
       // Show success message
       alert(`Successfully exported ${vehiclesToExport.length} vehicle(s) to Excel!`)
     } catch (error: any) {
-      console.error('Error exporting vehicles:', error)
+      logger.error('Error exporting vehicles', error, 'VehiclesPageClient')
       alert(`Failed to export vehicles: ${error.message || 'Unknown error'}`)
     }
   }
@@ -272,7 +286,7 @@ export default function VehiclesPageClient() {
       const tenantId = getCurrentTenantId()
       const isSuper = isSuperAdmin()
       
-      console.log('Updating vehicle inward status:', { vehicleId, newStatus })
+      logger.debug('Updating vehicle inward status', { vehicleId, newStatus }, 'VehiclesPageClient')
       
       let updateQuery = supabase
         .from('vehicle_inward')
@@ -289,10 +303,10 @@ export default function VehiclesPageClient() {
       
       const { data, error } = await updateQuery.select()
 
-      console.log('Update result:', { data, error })
+      logger.debug('Update result', { hasData: !!data, hasError: !!error }, 'VehiclesPageClient')
 
       if (error) {
-        console.error('Supabase error:', error)
+        logger.error('Supabase error', error, 'VehiclesPageClient')
         throw new Error(`Database error: ${error.message || 'Unknown error'}`)
       }
 
@@ -316,7 +330,7 @@ export default function VehiclesPageClient() {
             await notificationWorkflow.notifyVehicleDelivered(vehicleId, vehicleData)
           }
         } catch (notifError) {
-          console.error('Error sending notification:', notifError)
+          logger.error('Error sending notification', notifError, 'VehiclesPageClient')
           // Don't block success if notification fails
         }
       }
@@ -325,7 +339,7 @@ export default function VehiclesPageClient() {
       alert(`Status updated to: ${statusName}`)
       
     } catch (error: any) {
-      console.error('Error updating vehicle status:', error)
+      logger.error('Error updating vehicle status', error, 'VehiclesPageClient')
       alert(`Failed to update vehicle status: ${error.message}`)
     } finally {
       setIsUpdating(false)
@@ -352,7 +366,7 @@ export default function VehiclesPageClient() {
         const { error } = await deleteQuery
 
         if (error) {
-          console.error('Supabase error:', error)
+          logger.error('Supabase error', error, 'VehiclesPageClient')
           throw new Error(`Database error: ${error.message}`)
         }
 
@@ -364,7 +378,7 @@ export default function VehiclesPageClient() {
         fetchVehicles()
         
       } catch (error: any) {
-        console.error('Error deleting vehicle:', error)
+        logger.error('Error deleting vehicle', error, 'VehiclesPageClient')
         alert(`Failed to delete record: ${error.message}`)
       }
     }
@@ -663,6 +677,7 @@ export default function VehiclesPageClient() {
                 />
               </th>
               <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>ID</th>
+              <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Date</th>
               <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Vehicle</th>
               <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Customer</th>
               <th style={{ padding: '1rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Contact</th>
@@ -674,7 +689,7 @@ export default function VehiclesPageClient() {
           <tbody>
             {filteredVehicles.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>No vehicles found.</td>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>No vehicles found.</td>
               </tr>
             ) : (
               filteredVehicles.map((vehicle, index) => {
@@ -747,6 +762,9 @@ export default function VehiclesPageClient() {
                         )}
                       </div>
                     </div>
+                  </td>
+                  <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1e293b' }}>
+                    {vehicle.date ? formatDate(vehicle.date) : 'N/A'}
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#1e293b' }}>
                     <div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { safeGetUser } from '@/lib/auth-error-handler'
+import { safeGetUser } from '@/lib/helpers/auth-error-handler'
 import {
   BarChart3,
   TrendingUp,

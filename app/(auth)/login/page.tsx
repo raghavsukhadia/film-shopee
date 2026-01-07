@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Car, AlertCircle, Building2, User, Key, CheckCircle } from 'lucide-react'
-import Logo from '@/components/Logo'
+import Image from 'next/image'
 
 export default function LoginPage() {
   return (
@@ -246,7 +246,7 @@ function LoginContent() {
         // Check if user has any tenant access
         const { data: tenantUsers } = await supabase
           .from('tenant_users')
-          .select('tenant_id, role, tenants(id, name, workspace_url)')
+          .select('tenant_id, role, tenants(id, name, workspace_url, tenant_code)')
           .eq('user_id', authData.user.id)
 
         if (tenantUsers && tenantUsers.length > 0) {
@@ -258,6 +258,7 @@ function LoginContent() {
               id: tenantData?.id,
               name: tenantData?.name,
               workspace_url: tenantData?.workspace_url,
+              tenant_code: tenantData?.tenant_code,
               role: tu.role
             }
           }).filter((t: any) => t.id) // Filter out any null/undefined entries
@@ -278,7 +279,7 @@ function LoginContent() {
       // Show tenant selection with RS Car Accessories and ZORAVO Admin options
       const { data: allTenantUsers } = await supabase
         .from('tenant_users')
-        .select('tenant_id, role, tenants(id, name, workspace_url)')
+        .select('tenant_id, role, tenants(id, name, workspace_url, tenant_code)')
         .eq('user_id', authData.user.id)
 
       const tenants: any[] = []
@@ -294,26 +295,63 @@ function LoginContent() {
               id: tenantData.id,
               name: tenantData.name,
               workspace_url: tenantData.workspace_url,
+              tenant_code: tenantData.tenant_code,
               role: rsCarTenant.role
             })
           }
         } else {
-          // Add default RS Car Accessories tenant
+          // Fallback: Fetch tenant directly from tenants table if not found in join
+          const { data: directTenant } = await supabase
+            .from('tenants')
+            .select('id, name, workspace_url, tenant_code')
+            .eq('id', RS_CAR_ACCESSORIES_TENANT_ID)
+            .single()
+          
+          if (directTenant) {
+            tenants.push({
+              id: directTenant.id,
+              name: directTenant.name,
+              workspace_url: directTenant.workspace_url,
+              tenant_code: directTenant.tenant_code,
+              role: 'admin'
+            })
+          } else {
+            // Add default RS Car Accessories tenant (FS01) - only if database fetch fails
+            tenants.push({
+              id: RS_CAR_ACCESSORIES_TENANT_ID,
+              name: 'RS Car Accessories • Nagpur',
+              workspace_url: 'filmshopeezoravofs01',
+              tenant_code: 'FS01',
+              role: 'admin'
+            })
+          }
+        }
+      } else {
+        // Fallback: Fetch tenant directly from tenants table
+        const { data: directTenant } = await supabase
+          .from('tenants')
+          .select('id, name, workspace_url, tenant_code')
+          .eq('id', RS_CAR_ACCESSORIES_TENANT_ID)
+          .single()
+        
+        if (directTenant) {
+          tenants.push({
+            id: directTenant.id,
+            name: directTenant.name,
+            workspace_url: directTenant.workspace_url,
+            tenant_code: directTenant.tenant_code,
+            role: 'admin'
+          })
+        } else {
+          // Add default RS Car Accessories tenant (FS01) - only if database fetch fails
           tenants.push({
             id: RS_CAR_ACCESSORIES_TENANT_ID,
             name: 'RS Car Accessories • Nagpur',
-            workspace_url: 'rs-car-accessories-nagpur',
+            workspace_url: 'filmshopeezoravofs01',
+            tenant_code: 'FS01',
             role: 'admin'
           })
         }
-      } else {
-        // Add default RS Car Accessories tenant
-        tenants.push({
-          id: RS_CAR_ACCESSORIES_TENANT_ID,
-          name: 'RS Car Accessories • Nagpur',
-          workspace_url: 'rs-car-accessories-nagpur',
-          role: 'admin'
-        })
       }
 
       // Add ZORAVO Admin option
@@ -335,7 +373,7 @@ function LoginContent() {
     }
   }
 
-  const handleTenantSelect = (tenant: any) => {
+  const handleTenantSelect = async (tenant: any) => {
     if (tenant.is_admin || tenant.id === 'admin') {
       // ZORAVO Admin selected
       sessionStorage.setItem('is_super_admin', 'true')
@@ -346,9 +384,13 @@ function LoginContent() {
       sessionStorage.setItem('current_workspace_url', tenant.workspace_url)
       sessionStorage.removeItem('is_super_admin')
       
-      if (tenant.workspace_url === 'rs-car-accessories-nagpur') {
-        router.push('/dashboard')
+      // Route to dashboard - use tenant code for cleaner URLs
+      const tenantCode = tenant.tenant_code
+      
+      if (tenantCode) {
+        router.push(`/dashboard/${tenantCode}`)
       } else {
+        // Fallback to ID if tenant_code not available (backward compatibility)
         router.push(`/dashboard?tenant=${tenant.id}`)
       }
     }
@@ -417,7 +459,7 @@ function LoginContent() {
                     {tenant.name}
                   </div>
                   <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                    {tenant.workspace_url}.zoravo.in
+                    {tenant.workspace_url === 'admin' ? 'filmshopeezoravo.in' : tenant.workspace_url + '.in'}
                   </div>
                 </button>
               ))}
@@ -486,23 +528,49 @@ function LoginContent() {
           }}>
             <div style={{
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              width: '100%'
+              width: '100%',
+              gap: '0.375rem'
             }}>
-              <Logo size="large" showText={true} variant="dark" />
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                width: '180px',
+                height: '50px',
+                flexShrink: 0
+              }}>
+                <Image
+                  src="/logo-nav.jpg"
+                  alt="FILMSHOPPEÉ - Car Facelift Studio"
+                  width={180}
+                  height={50}
+                  style={{
+                    objectFit: 'contain',
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: '50px',
+                    display: 'block'
+                  }}
+                  priority
+                />
+              </div>
+              {/* Co-Powered by Zoravo */}
+              <div style={{
+                fontSize: '0.8125rem',
+                color: '#78716c',
+                letterSpacing: '0.03em',
+                marginTop: '0',
+                textAlign: 'center',
+                lineHeight: '1.5',
+                width: '180px'
+              }}>
+                <span style={{ fontWeight: 500 }}>Co-Powered by </span>
+                <span style={{ fontWeight: 700, color: '#d97706' }}>Zoravo</span>
+              </div>
             </div>
-          </div>
-          {/* Co-Powered by Zoravo */}
-          <div style={{
-            fontSize: '0.8125rem',
-            color: '#6b7280',
-            letterSpacing: '0.02em',
-            marginTop: '0.5rem',
-            textAlign: 'center'
-          }}>
-            <span style={{ fontWeight: 400 }}>Co-Powered by </span>
-            <span style={{ fontWeight: 700 }}>Zoravo</span>
           </div>
         </div>
 

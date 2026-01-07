@@ -3,18 +3,18 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Car, Wrench, Calendar, FileText, AlertCircle, DollarSign, Plus, Search, Eye, Edit, Trash2, Loader2, TrendingUp, TrendingDown, Save, X, CheckCircle, Maximize2, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react'
-import { dbService, type DashboardKPIs, type Vehicle, type Invoice } from '@/lib/database-service'
-import { checkUserRole, canViewRevenue, type UserRole } from '@/lib/rbac'
-import DashboardCharts from '@/components/dashboard-charts'
-import VehicleDetailsModal from '@/components/VehicleDetailsModal'
+import { dbService, type DashboardKPIs, type Vehicle, type Invoice } from '@/lib/services/database-service'
+import { checkUserRole, canViewRevenue, type UserRole } from '@/lib/helpers/rbac'
+import DashboardCharts from '@/components/shared/dashboard-charts'
+import VehicleDetailsModal from '@/components/vehicles/VehicleDetailsModal'
 import { createClient } from '@/lib/supabase/client'
-import { notificationWorkflow } from '@/lib/notification-workflow'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
-import { formatMakeModel, isUUID } from '@/lib/utils'
+import { notificationWorkflow } from '@/lib/services/notification-workflow'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
+import { formatMakeModel, isUUID } from '@/lib/utils/legacy'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
 
-export default function DashboardPageClient() {
+export default function DashboardPageClient({ tenantCode }: { tenantCode?: string } = {}) {
   const [activeTab, setActiveTab] = useState('overview')
   const [loading, setLoading] = useState(true)
   const [kpis, setKpis] = useState<DashboardKPIs | null>(null)

@@ -1,6 +1,6 @@
 'use client'
 
-import Logo from '@/components/Logo'
+import Image from 'next/image'
 import FilmshoppeeLogo from '@/components/FilmshoppeeLogo'
 import { CheckCircle, TrendingUp, Shield, Zap, Users, BarChart3, Clock, HeadphonesIcon } from 'lucide-react'
 
@@ -25,7 +25,19 @@ export default function AboutPageClient() {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <Logo size="large" showText={false} variant="light" />
+            <Image
+              src="/logo-nav.jpg"
+              alt="FILMSHOPPEÉ - Car Facelift Studio"
+              width={240}
+              height={120}
+              style={{
+                objectFit: 'contain',
+                maxWidth: '100%',
+                height: 'auto',
+                display: 'block'
+              }}
+              priority
+            />
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <span style={{ padding: '0.375rem 0.75rem', backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, backdropFilter: 'blur(10px)' }}>Version 1.0</span>
@@ -354,11 +366,11 @@ export default function AboutPageClient() {
         }}>
           <DetailRow label="Application" value="Zoravo OMS" />
           <DetailRow label="Industry" value="Automotive Service & Accessories Management" />
-          <DetailRow label="Developed By" value="Filmshoppee - Car Facelift Studio" />
+          <DetailRow label="Developed By" value="Raghav Sukhadia" />
           <DetailRow label="Support" value={<a href="mailto:info@filmshoppee.com" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 600 }}>info@filmshoppee.com</a>} />
           <DetailRow label="Phone" value={<a href="tel:+919574986667" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 600 }}>+91 95749 86667</a>} />
-          <DetailRow label="Location" value="Filmshoppee, VIP Road, near Vijay Sales, Vesu, Surat, Gujarat 395007" />
-          <DetailRow label="Website" value={<a href="https://filmshoppee.com" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 600 }}>filmshoppee.com</a>} />
+          <DetailRow label="Location" value="Sunkool Solution, Nagpur, India" />
+          <DetailRow label="Website" value={<a href="https://www.zoravo.in/" target="_blank" rel="noopener noreferrer" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 600 }}>https://www.zoravo.in/</a>} />
           <DetailRow label="Connect" value={
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
               <a 

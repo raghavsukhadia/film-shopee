@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, User, Phone, Mail, Car, MapPin, Wrench, DollarSign, Calendar, MessageSquare, Send, Package, Edit } from 'lucide-react'
+import { X, User, Phone, Mail, Car, MapPin, Wrench, DollarSign, Calendar, MessageSquare, Send, Package, Edit, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import VehicleCommentsSection from '@/components/VehicleCommentsSection'
-import { isUUID } from '@/lib/utils'
+import VehicleCommentsSection from '@/components/vehicles/VehicleCommentsSection'
+import { isUUID } from '@/lib/utils/legacy'
 
 interface VehicleInward {
   id: string
@@ -278,380 +278,687 @@ export default function VehicleDetailsModal({ vehicle, onClose, onUpdate }: Vehi
       >
       <div style={{
         backgroundColor: 'white',
-        borderRadius: '0.5rem',
+        borderRadius: '0.875rem',
         width: '100%',
         maxWidth: '1000px',
         maxHeight: '90vh',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
       }}
       onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
           <div style={{
-            padding: '1.5rem',
-            borderBottom: '1px solid #e2e8f0',
+            padding: '2rem',
+            borderBottom: '1px solid #e5e7eb',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'flex-start',
+            backgroundColor: '#f8fafc'
           }}>
-            <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#1e293b', margin: 0 }}>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ 
+                fontSize: '1.875rem', 
+                fontWeight: '700', 
+                color: '#111827', 
+                margin: 0,
+                marginBottom: '0.75rem',
+                letterSpacing: '-0.025em'
+              }}>
                 Vehicle Inward Details
               </h2>
-              <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0.25rem 0 0 0' }}>
-                ID: {vehicle.short_id || vehicle.id?.substring(0, 8) + '...'}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500' }}>
+                  Entry ID: <span style={{ color: '#111827', fontWeight: '600' }}>{vehicle.short_id || vehicle.id?.substring(0, 8)}</span>
+                </span>
+                <span style={{ fontSize: '0.875rem', color: '#d1d5db' }}>•</span>
+                <span style={{
+                  padding: '0.375rem 0.875rem',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  backgroundColor: statusColor.bg,
+                  color: statusColor.text,
+                  border: `1px solid ${statusColor.text}20`
+                }}>
+                  {currentStatus.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                </span>
+                <span style={{
+                  padding: '0.375rem 0.875rem',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.8125rem',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  backgroundColor: priorityColor.bg,
+                  color: priorityColor.text,
+                  border: `1px solid ${priorityColor.text}20`
+                }}>
+                  Priority: {currentPriority.toUpperCase()}
+                </span>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <button
-                onClick={onClose}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <X style={{ width: '1.5rem', height: '1.5rem', color: '#64748b' }} />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              style={{
+                padding: '0.625rem',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e5e7eb'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#f3f4f6'
+              }}
+            >
+              <X style={{ width: '1.25rem', height: '1.25rem', color: '#64748b' }} />
+            </button>
           </div>
 
         {/* Content */}
         <div style={{
-          padding: '1.5rem',
+          padding: '2rem',
           overflowY: 'auto',
-          flex: 1
+          flex: 1,
+          backgroundColor: '#f8fafc'
         }}>
-          {/* Status and Priority Badges */}
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-            <span style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              backgroundColor: statusColor.bg,
-              color: statusColor.text
-            }}>
-              Status: {currentStatus.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-            </span>
-            <span style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              backgroundColor: priorityColor.bg,
-              color: priorityColor.text
-            }}>
-              Priority: {currentPriority.toUpperCase()}
-            </span>
-          </div>
-
-          {/* Status Update Section */}
-          {statusOptions.length > 0 && (
-            <div style={{ marginBottom: '1.5rem', padding: '1rem', backgroundColor: '#f0f9ff', borderRadius: '0.5rem', border: '1px solid #bae6fd' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#1e293b', marginBottom: '0.5rem' }}>
-                Update Status
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value) handleStatusUpdate(e.target.value)
-                  }}
-                  disabled={isUpdatingStatus}
-                  style={{
-                    flex: 1,
-                    padding: '0.5rem',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    cursor: isUpdatingStatus ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  <option value="">Select new status...</option>
-                  {statusOptions.map(status => (
-                    <option key={status} value={status.toLowerCase().replace(/\s+/g, '_')}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-                {isUpdatingStatus && (
-                  <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Updating...</span>
-                )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Status Update Section */}
+            {statusOptions.length > 0 && (
+              <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '0.875rem', 
+                padding: '2rem',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.5rem',
+                  paddingBottom: '1.25rem',
+                  borderBottom: '2px solid #f1f5f9'
+                }}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: '#eff6ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 2px rgba(37, 99, 235, 0.1)'
+                  }}>
+                    <Edit style={{ width: '1.5rem', height: '1.5rem', color: '#2563eb' }} />
+                  </div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                    Update Status
+                  </h3>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) handleStatusUpdate(e.target.value)
+                    }}
+                    disabled={isUpdatingStatus}
+                    style={{
+                      flex: 1,
+                      padding: '0.75rem 1rem',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.9375rem',
+                      outline: 'none',
+                      cursor: isUpdatingStatus ? 'not-allowed' : 'pointer',
+                      backgroundColor: 'white',
+                      color: '#111827',
+                      fontWeight: '500'
+                    }}
+                  >
+                    <option value="">Select new status...</option>
+                    {statusOptions.map(status => (
+                      <option key={status} value={status.toLowerCase().replace(/\s+/g, '_')}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                  {isUpdatingStatus && (
+                    <span style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>Updating...</span>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            {/* Left Column */}
-            <div>
-              {/* Customer Info */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <User style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
-                  Customer Information
-                </h3>
-                <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '0.5rem' }}>
-                  <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                    <strong>Name:</strong> {vehicle.customer_name || 'N/A'}
+            {/* Single Column Layout */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Customer Information Card */}
+              <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '0.875rem', 
+                padding: '2rem',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.75rem',
+                  paddingBottom: '1.25rem',
+                  borderBottom: '2px solid #f1f5f9'
+                }}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: '#eff6ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 2px rgba(37, 99, 235, 0.1)'
+                  }}>
+                    <User style={{ width: '1.5rem', height: '1.5rem', color: '#2563eb' }} />
                   </div>
-                  <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Phone style={{ width: '0.875rem', height: '0.875rem', color: '#64748b' }} />
-                    <a href={`tel:${vehicle.customer_phone}`} style={{ color: '#2563eb', textDecoration: 'none' }}>
-                      {vehicle.customer_phone || 'N/A'}
-                    </a>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                    Customer Information
+                  </h3>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicle.customer_name || 'N/A'}</div>
                   </div>
-                  {vehicle.customer_email && (
-                    <div style={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Mail style={{ width: '0.875rem', height: '0.875rem', color: '#64748b' }} />
-                      <a href={`mailto:${vehicle.customer_email}`} style={{ color: '#2563eb', textDecoration: 'none' }}>
-                        {vehicle.customer_email}
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Phone</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Phone style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
+                      <a href={`tel:${vehicle.customer_phone}`} style={{ color: '#2563eb', textDecoration: 'none' }}>
+                        {vehicle.customer_phone || 'N/A'}
                       </a>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Vehicle Info */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Car style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
-                  Vehicle Information
-                </h3>
-                <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '0.5rem' }}>
-                  <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                    <strong>Registration:</strong> {vehicle.registration_number || 'N/A'}
                   </div>
-                  <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                    <strong>Model:</strong> {vehicle.model || 'N/A'}
-                  </div>
-                  <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                    <strong>Make:</strong> {vehicle.make || 'N/A'}
-                  </div>
-                  <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                    <strong>Type:</strong> {vehicleTypeName}
-                  </div>
-                  {vehicle.year && (
-                    <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                      <strong>Year:</strong> {vehicle.year}
-                    </div>
-                  )}
-                  {vehicle.color && (
-                    <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                      <strong>Color:</strong> {vehicle.color}
-                    </div>
-                  )}
-                  {vehicle.odometer_reading && (
-                    <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                      <strong>Odometer:</strong> {vehicle.odometer_reading} km
-                    </div>
-                  )}
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
-                    Created: {vehicle.created_at ? new Date(vehicle.created_at).toLocaleString('en-IN') : 'Unknown'}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div>
-              {/* Assignment Info */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Wrench style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
-                  Assignment Details
-                </h3>
-                <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '0.5rem' }}>
-                  <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                    <strong>Manager:</strong><br />
-                    <span style={{ color: '#64748b' }}>{managerName}</span>
-                  </div>
-                  {installerName && (
-                    <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                      <strong>Installer:</strong><br />
-                      <span style={{ color: '#64748b' }}>{installerName}</span>
-                    </div>
-                  )}
-                  <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
-                    <MapPin style={{ width: '0.875rem', height: '0.875rem', color: '#64748b', marginTop: '0.125rem', flexShrink: 0 }} />
+                  {vehicle.customer_email && (
                     <div>
-                      <strong>Location:</strong><br />
-                      <span style={{ color: '#64748b' }}>{locationName}</span>
-                    </div>
-                  </div>
-                  {vehicle.estimated_completion_date && (
-                    <div style={{ fontSize: '0.875rem', display: 'flex', alignItems: 'start', gap: '0.5rem' }}>
-                      <Calendar style={{ width: '0.875rem', height: '0.875rem', color: '#64748b', marginTop: '0.125rem', flexShrink: 0 }} />
-                      <div>
-                        <strong>Est. Completion:</strong><br />
-                        <span style={{ color: '#64748b' }}>
-                          {new Date(vehicle.estimated_completion_date).toLocaleDateString('en-IN')}
-                        </span>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Mail style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
+                        <a href={`mailto:${vehicle.customer_email}`} style={{ color: '#2563eb', textDecoration: 'none' }}>
+                          {vehicle.customer_email}
+                        </a>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Cost Info */}
-              {vehicle.estimated_cost !== undefined && vehicle.estimated_cost !== null && (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <DollarSign style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
-                    Cost & Revenue
+              {/* Vehicle Information Card */}
+              <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '0.875rem', 
+                padding: '2rem',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.75rem',
+                  paddingBottom: '1.25rem',
+                  borderBottom: '2px solid #f1f5f9'
+                }}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: '#f0fdf4',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 2px rgba(5, 150, 105, 0.1)'
+                  }}>
+                    <Car style={{ width: '1.5rem', height: '1.5rem', color: '#059669' }} />
+                  </div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                    Vehicle Information
                   </h3>
-                  <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '0.5rem' }}>
-                    <div style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                      <strong>Estimated Cost:</strong> ₹{vehicle.estimated_cost?.toLocaleString('en-IN') || '0'}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registration Number</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicle.registration_number || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Make</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicle.make || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Model</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicle.model || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vehicle Type</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicleTypeName}</div>
+                  </div>
+                  {vehicle.year && (
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Year</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicle.year}</div>
                     </div>
-                    <div style={{ fontSize: '0.875rem' }}>
-                      <strong>Payment Status:</strong> {currentStatus === 'complete_and_delivered' || currentStatus === 'completed' ? 'Paid' : 'Pending Payment'}
+                  )}
+                  {vehicle.color && (
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Color</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicle.color}</div>
+                    </div>
+                  )}
+                  {vehicle.odometer_reading && (
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Odometer Reading</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{vehicle.odometer_reading.toLocaleString('en-IN')} km</div>
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Created Date</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>
+                      {vehicle.created_at ? new Date(vehicle.created_at).toLocaleString('en-IN', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) : 'Unknown'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Assignment Details Card */}
+              <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '0.875rem', 
+                padding: '2rem',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '1rem', 
+                  marginBottom: '1.75rem',
+                  paddingBottom: '1.25rem',
+                  borderBottom: '2px solid #f1f5f9'
+                }}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: '#fef3c7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 2px rgba(217, 119, 6, 0.1)'
+                  }}>
+                    <Wrench style={{ width: '1.5rem', height: '1.5rem', color: '#d97706' }} />
+                  </div>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                    Assignment Details
+                  </h3>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assigned Manager</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{managerName}</div>
+                  </div>
+                  {installerName && (
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Installer</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827' }}>{installerName}</div>
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Location</div>
+                    <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <MapPin style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
+                      {locationName}
+                    </div>
+                  </div>
+                  {vehicle.estimated_completion_date && (
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estimated Completion</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Calendar style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
+                        {new Date(vehicle.estimated_completion_date).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Cost & Revenue Card */}
+              {vehicle.estimated_cost !== undefined && vehicle.estimated_cost !== null && (
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '0.875rem', 
+                  padding: '2rem',
+                  border: '1px solid #e5e7eb',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '1rem', 
+                    marginBottom: '1.75rem',
+                    paddingBottom: '1.25rem',
+                    borderBottom: '2px solid #f1f5f9'
+                  }}>
+                    <div style={{
+                      width: '3rem',
+                      height: '3rem',
+                      borderRadius: '0.75rem',
+                      backgroundColor: '#dcfce7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 1px 2px rgba(5, 150, 105, 0.1)'
+                    }}>
+                      <DollarSign style={{ width: '1.5rem', height: '1.5rem', color: '#059669' }} />
+                    </div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                      Cost & Revenue
+                    </h3>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Estimated Cost</div>
+                      <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#111827' }}>₹{vehicle.estimated_cost?.toLocaleString('en-IN') || '0'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.5rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Payment Status</div>
+                      <div style={{ fontSize: '1rem', fontWeight: '600', color: currentStatus === 'complete_and_delivered' || currentStatus === 'completed' ? '#059669' : '#dc2626' }}>
+                        {currentStatus === 'complete_and_delivered' || currentStatus === 'completed' ? 'Paid' : 'Pending Payment'}
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
-            </div>
-          </div>
 
-          {/* Product Details */}
-          {products.length > 0 && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Package style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
-                Product Details
-              </h3>
-              <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '0.5rem' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <th style={{ padding: '0.5rem', textAlign: 'left', color: '#64748b', fontWeight: '500' }}>Product</th>
-                      <th style={{ padding: '0.5rem', textAlign: 'left', color: '#64748b', fontWeight: '500' }}>Brand</th>
-                      <th style={{ padding: '0.5rem', textAlign: 'left', color: '#64748b', fontWeight: '500' }}>Department</th>
-                      <th style={{ padding: '0.5rem', textAlign: 'right', color: '#64748b', fontWeight: '500' }}>Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((product, index) => (
-                      <tr key={index} style={{ borderBottom: index === products.length - 1 ? 'none' : '1px solid #e2e8f0' }}>
-                        <td style={{ padding: '0.5rem' }}>{product.product || '-'}</td>
-                        <td style={{ padding: '0.5rem' }}>{product.brand || '-'}</td>
-                        <td style={{ padding: '0.5rem' }}>{product.department || '-'}</td>
-                        <td style={{ padding: '0.5rem', textAlign: 'right' }}>₹{parseFloat(product.price || 0).toLocaleString('en-IN')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Product Details Card */}
+              {products.length > 0 && (
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '0.875rem', 
+                  padding: '2rem',
+                  border: '1px solid #e5e7eb',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '1rem', 
+                    marginBottom: '1.75rem',
+                    paddingBottom: '1.25rem',
+                    borderBottom: '2px solid #f1f5f9'
+                  }}>
+                    <div style={{
+                      width: '3rem',
+                      height: '3rem',
+                      borderRadius: '0.75rem',
+                      backgroundColor: '#f3e8ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 1px 2px rgba(124, 58, 237, 0.1)'
+                    }}>
+                      <Package style={{ width: '1.5rem', height: '1.5rem', color: '#7c3aed' }} />
+                    </div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                      Product Details
+                    </h3>
+                  </div>
+                  <div style={{ border: '1px solid #e5e7eb', borderRadius: '0.75rem', overflow: 'hidden', backgroundColor: 'white' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead style={{ backgroundColor: '#f8fafc' }}>
+                        <tr>
+                          <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #e2e8f0' }}>Product</th>
+                          <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #e2e8f0' }}>Brand</th>
+                          <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #e2e8f0' }}>Department</th>
+                          <th style={{ padding: '1rem 1.5rem', textAlign: 'right', fontSize: '0.875rem', fontWeight: '600', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '2px solid #e2e8f0' }}>Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {products.map((product, index) => (
+                          <tr key={index} style={{ 
+                            borderBottom: index === products.length - 1 ? 'none' : '1px solid #e5e7eb',
+                            backgroundColor: index % 2 === 0 ? 'white' : '#f8fafc',
+                            transition: 'background-color 0.2s'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f1f5f9'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = index % 2 === 0 ? 'white' : '#f8fafc'
+                          }}
+                          >
+                            <td style={{ padding: '1.125rem 1.5rem', fontSize: '0.9375rem', fontWeight: '500', color: '#111827' }}>{product.product || '-'}</td>
+                            <td style={{ padding: '1.125rem 1.5rem', fontSize: '0.9375rem', color: '#64748b' }}>{product.brand || '-'}</td>
+                            <td style={{ padding: '1.125rem 1.5rem', fontSize: '0.9375rem', color: '#64748b' }}>{product.department || '-'}</td>
+                            <td style={{ padding: '1.125rem 1.5rem', fontSize: '0.9375rem', fontWeight: '600', color: '#059669', textAlign: 'right' }}>₹{parseFloat(product.price || 0).toLocaleString('en-IN')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Invoice Number Card */}
+              {(() => {
+                let invoiceNumber = ''
+                if (vehicle.notes) {
+                  try {
+                    const notesData = JSON.parse(vehicle.notes)
+                    if (notesData.invoice_number) {
+                      invoiceNumber = notesData.invoice_number
+                    }
+                  } catch {
+                    // If parsing fails, invoice number remains empty
+                  }
+                }
+                
+                if (invoiceNumber) {
+                  return (
+                    <div style={{ 
+                      backgroundColor: 'white', 
+                      borderRadius: '0.875rem', 
+                      padding: '2rem',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+                    }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '1rem', 
+                        marginBottom: '1.75rem',
+                        paddingBottom: '1.25rem',
+                        borderBottom: '2px solid #f1f5f9'
+                      }}>
+                        <div style={{
+                          width: '3rem',
+                          height: '3rem',
+                          borderRadius: '0.75rem',
+                          backgroundColor: '#dbeafe',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 1px 2px rgba(37, 99, 235, 0.1)'
+                        }}>
+                          <FileText style={{ width: '1.5rem', height: '1.5rem', color: '#2563eb' }} />
+                        </div>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                          Invoice Information
+                        </h3>
+                      </div>
+                      <div style={{ 
+                        backgroundColor: '#eff6ff', 
+                        padding: '1.5rem', 
+                        borderRadius: '0.75rem',
+                        border: '1px solid #bfdbfe'
+                      }}>
+                        <div style={{ fontSize: '0.75rem', color: '#1e40af', marginBottom: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Invoice Number (External Platform)
+                        </div>
+                        <div style={{ 
+                          fontSize: '1.5rem', 
+                          fontWeight: '700', 
+                          color: '#1e3a8a',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {invoiceNumber}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+                return null
+              })()}
+
+              {/* Additional Information Card */}
+              {(vehicle.issues_reported || vehicle.notes) && (
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '0.875rem', 
+                  padding: '2rem',
+                  border: '1px solid #e5e7eb',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '1rem', 
+                    marginBottom: '1.75rem',
+                    paddingBottom: '1.25rem',
+                    borderBottom: '2px solid #f1f5f9'
+                  }}>
+                    <div style={{
+                      width: '3rem',
+                      height: '3rem',
+                      borderRadius: '0.75rem',
+                      backgroundColor: '#fef3c7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 1px 2px rgba(217, 119, 6, 0.1)'
+                    }}>
+                      <MessageSquare style={{ width: '1.5rem', height: '1.5rem', color: '#d97706' }} />
+                    </div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+                      Additional Information
+                    </h3>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {vehicle.issues_reported && (
+                      <div style={{ 
+                        backgroundColor: '#fef2f2', 
+                        padding: '1.25rem', 
+                        borderRadius: '0.75rem', 
+                        borderLeft: '4px solid #dc2626',
+                        border: '1px solid #fecaca'
+                      }}>
+                        <div style={{ fontSize: '0.75rem', color: '#dc2626', marginBottom: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Issues Reported
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.9375rem', color: '#991b1b', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                          {vehicle.issues_reported}
+                        </p>
+                      </div>
+                    )}
+                    {vehicle.notes && (() => {
+                      const formattedNotes = formatNotes(vehicle.notes)
+                      // Only show if notes contain actual content (not just JSON structure)
+                      if (formattedNotes && formattedNotes.trim() && !formattedNotes.startsWith('{')) {
+                        return (
+                          <div style={{ 
+                            backgroundColor: '#f0f9ff', 
+                            padding: '1.25rem', 
+                            borderRadius: '0.75rem', 
+                            borderLeft: '4px solid #2563eb',
+                            border: '1px solid #bfdbfe'
+                          }}>
+                            <div style={{ fontSize: '0.75rem', color: '#2563eb', marginBottom: '0.75rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Notes
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.9375rem', color: '#1e40af', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                              {formattedNotes}
+                            </p>
+                          </div>
+                        )
+                      }
+                      return null
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Comments Section */}
+              <div style={{ 
+                backgroundColor: 'white', 
+                borderRadius: '0.875rem', 
+                padding: '2rem',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+              }}>
+                <VehicleCommentsSection vehicleId={vehicle.id} userRole="admin" />
               </div>
             </div>
-          )}
-
-          {/* Invoice Number - Display for all users if exists */}
-          {(() => {
-            let invoiceNumber = ''
-            if (vehicle.notes) {
-              try {
-                const notesData = JSON.parse(vehicle.notes)
-                if (notesData.invoice_number) {
-                  invoiceNumber = notesData.invoice_number
-                }
-              } catch {
-                // If parsing fails, invoice number remains empty
-              }
-            }
-            
-            if (invoiceNumber) {
-              return (
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <DollarSign style={{ width: '1rem', height: '1rem', color: '#64748b' }} />
-                    Invoice Number
-                  </h3>
-                  <div style={{ 
-                    backgroundColor: '#f0f9ff', 
-                    padding: '1rem', 
-                    borderRadius: '0.5rem',
-                    borderLeft: '4px solid #0284c7'
-                  }}>
-                    <div style={{ fontSize: '0.75rem', color: '#0369a1', marginBottom: '0.5rem', fontWeight: '600' }}>
-                      Invoice Number (External Platform):
-                    </div>
-                    <div style={{ 
-                      fontSize: '1.125rem', 
-                      fontWeight: '700', 
-                      color: '#0c4a6e',
-                      letterSpacing: '0.05em'
-                    }}>
-                      {invoiceNumber}
-                    </div>
-                  </div>
-                </div>
-              )
-            }
-            return null
-          })()}
-
-          {/* Issues and Notes */}
-          {(vehicle.issues_reported || vehicle.notes) && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.75rem' }}>
-                Additional Information
-              </h3>
-              {vehicle.issues_reported && (
-                <div style={{ marginBottom: '0.75rem', backgroundColor: '#fef2f2', padding: '1rem', borderRadius: '0.5rem', borderLeft: '4px solid #dc2626' }}>
-                  <strong style={{ color: '#dc2626', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
-                    Issues Reported:
-                  </strong>
-                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#991b1b', whiteSpace: 'pre-wrap' }}>
-                    {vehicle.issues_reported}
-                  </p>
-                </div>
-              )}
-              {vehicle.notes && (
-                <div style={{ backgroundColor: '#f0f9ff', padding: '1rem', borderRadius: '0.5rem', borderLeft: '4px solid #2563eb' }}>
-                  <strong style={{ color: '#2563eb', fontSize: '0.875rem', display: 'block', marginBottom: '0.5rem' }}>
-                    Notes:
-                  </strong>
-                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#1e40af', whiteSpace: 'pre-wrap' }}>
-                    {formatNotes(vehicle.notes)}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Comments Section */}
-          <div>
-            <VehicleCommentsSection vehicleId={vehicle.id} userRole="admin" />
           </div>
         </div>
 
         {/* Footer */}
         <div style={{
-          padding: '1rem 1.5rem',
-          borderTop: '1px solid #e2e8f0',
+          padding: '1.5rem 2rem',
+          borderTop: '1px solid #e5e7eb',
           display: 'flex',
           justifyContent: 'flex-end',
-          alignItems: 'center'
+          alignItems: 'center',
+          backgroundColor: '#f8fafc'
         }}>
           <button
             onClick={onClose}
             style={{
-              padding: '0.5rem 1rem',
+              padding: '0.625rem 1.5rem',
               backgroundColor: '#2563eb',
               color: 'white',
               border: 'none',
-              borderRadius: '0.375rem',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              cursor: 'pointer'
+              borderRadius: '0.5rem',
+              fontSize: '0.9375rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: '0 1px 2px rgba(37, 99, 235, 0.2)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1d4ed8'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(37, 99, 235, 0.3)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#2563eb'
+              e.currentTarget.style.boxShadow = '0 1px 2px rgba(37, 99, 235, 0.2)'
             }}
           >
             Close

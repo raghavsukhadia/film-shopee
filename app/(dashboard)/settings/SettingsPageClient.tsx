@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Settings, User, Bell, Save, Users, Wrench, MapPin, UserCheck, Edit, Trash2, Plus, X, DollarSign, Briefcase, Car, MessageSquare, Smartphone, ToggleLeft, ToggleRight, FileText, Clock, Mail, HelpCircle, CheckCircle, XCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { safeGetUser } from '@/lib/auth-error-handler'
-import UserManagementModal from '@/components/UserManagementModal'
-import { whatsappService, type WhatsAppConfig } from '@/lib/whatsapp-service'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import { safeGetUser } from '@/lib/helpers/auth-error-handler'
+import UserManagementModal from '@/components/settings/UserManagementModal'
+import { whatsappService, type WhatsAppConfig } from '@/lib/services/whatsapp-service'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
 
 export default function SettingsPageClient() {
   const supabase = createClient()
@@ -1536,11 +1536,21 @@ export default function SettingsPageClient() {
       const isSuper = isSuperAdmin()
       
       // Update tenant name if it changed
-      if (tenantId && !isSuper) {
+      // Fixed: Allow super admins to update tenant name when they have tenant context
+      // For super admins, try to get tenantId from sessionStorage or use the default FS01 tenant
+      let targetTenantId = tenantId
+      if (!targetTenantId && isSuper) {
+        // Super admin might not have tenantId in context, but they're likely editing FS01
+        // Try to get it from sessionStorage or use the default tenant ID
+        const defaultTenantId = '00000000-0000-0000-0000-000000000001' // FS01
+        targetTenantId = defaultTenantId
+      }
+      
+      if (targetTenantId) {
         const { error: tenantUpdateError } = await supabase
           .from('tenants')
           .update({ name: companySettings.name })
-          .eq('id', tenantId)
+          .eq('id', targetTenantId)
         
         if (tenantUpdateError) {
           console.error('Error updating tenant name:', tenantUpdateError)

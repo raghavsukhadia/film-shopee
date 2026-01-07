@@ -34,13 +34,14 @@ import {
   Code,
   Phone
 } from 'lucide-react'
-import Logo from '@/components/Logo'
+import Image from 'next/image'
 
 function LandingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [showCreateAccount, setShowCreateAccount] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [logoError, setLogoError] = useState(false)
   const [animatedStats, setAnimatedStats] = useState({
     vehicles: 0,
     customers: 0,
@@ -216,7 +217,84 @@ function LandingPageContent() {
         }
         
         /* Responsive Styles */
+        /* Laptop Screen Sizes */
+        @media (max-width: 1366px) {
+          nav > div {
+            padding: 0 1.5rem !important;
+            gap: 1.5rem !important;
+          }
+          nav .nav-buttons {
+            gap: 0.625rem !important;
+          }
+          nav .nav-buttons button,
+          nav .nav-buttons a {
+            padding: 0.625rem 1rem !important;
+            min-width: 90px !important;
+            font-size: 0.8125rem !important;
+          }
+          nav .logo-container {
+            width: 180px !important;
+          }
+          nav .logo-container > div:first-child {
+            width: 100% !important;
+          }
+          nav .logo-container > div:last-child {
+            width: 100% !important;
+          }
+        }
+        
+        @media (max-width: 1280px) {
+          nav > div {
+            padding: 0 1.25rem !important;
+            gap: 1.25rem !important;
+          }
+          nav .nav-buttons {
+            gap: 0.5rem !important;
+          }
+          nav .nav-buttons button,
+          nav .nav-buttons a {
+            padding: 0.5625rem 0.875rem !important;
+            min-width: 85px !important;
+            font-size: 0.8125rem !important;
+          }
+          nav .logo-container {
+            width: 160px !important;
+          }
+          nav .logo-container > div:first-child {
+            width: 100% !important;
+            height: 45px !important;
+          }
+          nav .logo-container > div:last-child {
+            width: 100% !important;
+            font-size: 0.75rem !important;
+          }
+        }
+        
         @media (max-width: 1024px) {
+          nav > div {
+            padding: 0 1rem !important;
+            gap: 1rem !important;
+          }
+          nav .nav-buttons {
+            gap: 0.5rem !important;
+          }
+          nav .nav-buttons button,
+          nav .nav-buttons a {
+            padding: 0.5625rem 0.875rem !important;
+            min-width: 80px !important;
+            font-size: 0.75rem !important;
+          }
+          nav .logo-container {
+            width: 150px !important;
+          }
+          nav .logo-container > div:first-child {
+            width: 100% !important;
+            height: 42px !important;
+          }
+          nav .logo-container > div:last-child {
+            width: 100% !important;
+            font-size: 0.75rem !important;
+          }
           .hero-grid {
             grid-template-columns: 1fr !important;
             gap: 2rem !important;
@@ -339,12 +417,18 @@ function LandingPageContent() {
         left: 0,
         right: 0,
         zIndex: 50,
-        backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.95)' : '#ffffff',
-        backdropFilter: isScrolled ? 'blur(10px)' : 'none',
-        borderBottom: '1px solid #e5e7eb',
+        background: isScrolled 
+          ? 'linear-gradient(to bottom, rgba(255, 255, 255, 0.98), rgba(255, 251, 245, 0.95))' 
+          : 'linear-gradient(to bottom, #ffffff, #fffbef)',
+        backdropFilter: isScrolled ? 'blur(12px) saturate(180%)' : 'none',
+        borderBottom: isScrolled 
+          ? '2px solid rgba(245, 158, 11, 0.15)' 
+          : '2px solid rgba(245, 158, 11, 0.08)',
         padding: isScrolled ? '0.75rem 0' : '1rem 0',
-        boxShadow: isScrolled ? '0 4px 6px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.05)',
-        transition: 'all 0.3s ease',
+        boxShadow: isScrolled 
+          ? '0 4px 12px rgba(245, 158, 11, 0.08), 0 2px 4px rgba(0,0,0,0.05)' 
+          : '0 1px 3px rgba(245, 158, 11, 0.05)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         width: '100%'
       }}>
         <div style={{
@@ -354,29 +438,80 @@ function LandingPageContent() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem'
+          flexWrap: 'nowrap',
+          gap: '2rem',
+          width: '100%',
+          height: '100%'
         }}>
           <div className="logo-container" style={{ 
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'flex-start', 
-            gap: '0.25rem',
+            gap: '0.375rem',
             justifyContent: 'center',
-            flexShrink: 0
+            flexShrink: 0,
+            width: '180px',
+            paddingRight: '1rem'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
-              <Logo size="medium" showText={true} variant="dark" />
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'flex-start',
+              width: '100%',
+              height: '50px',
+              flexShrink: 0
+            }}>
+              {logoError ? (
+                <div style={{
+                  width: '100%',
+                  height: '50px',
+                  backgroundColor: '#f3f4f6',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6b7280',
+                  fontSize: '0.75rem',
+                  fontWeight: 600
+                }}>
+                  Logo Not Found
+                </div>
+              ) : (
+                <Image
+                  src="/logo-nav.jpg"
+                  alt="FILMSHOPPEÉ - Car Facelift Studio"
+                  width={180}
+                  height={50}
+                  style={{
+                    objectFit: 'contain',
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: '50px',
+                    display: 'block'
+                  }}
+                  priority
+                  onError={() => {
+                    console.error('Logo image failed to load. Make sure logo-nav.jpg exists in the public folder.')
+                    setLogoError(true)
+                  }}
+                />
+              )}
             </div>
             <div style={{
-              fontSize: '0.6875rem',
-              color: '#6b7280',
-              letterSpacing: '0.02em',
-              marginTop: '0.125rem',
-              textAlign: 'left'
+              fontSize: '0.8125rem',
+              color: '#78716c',
+              letterSpacing: '0.03em',
+              marginTop: '0',
+              textAlign: 'left',
+              lineHeight: '1.5',
+              width: '100%',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}>
-              <span style={{ fontWeight: 400 }}>Co-Powered by </span>
-              <span style={{ fontWeight: 700 }}>Zoravo</span>
+              <span style={{ fontWeight: 500 }}>Co-Powered by </span>
+              <span style={{ fontWeight: 700, color: '#d97706' }}>Zoravo</span>
             </div>
           </div>
           
@@ -384,34 +519,46 @@ function LandingPageContent() {
             display: 'flex', 
             gap: '0.75rem', 
             alignItems: 'center',
-            flexWrap: 'wrap',
-            justifyContent: 'flex-end'
+            flexWrap: 'nowrap',
+            justifyContent: 'flex-end',
+            flexShrink: 0,
+            minWidth: 'fit-content',
+            paddingLeft: '1rem'
           }}>
             <button
               onClick={() => router.push('/login')}
               style={{
-                padding: '0.625rem 1.5rem',
+                padding: '0.625rem 1.25rem',
                 backgroundColor: 'transparent',
-                color: '#f59e0b',
-                border: '1.5px solid #f59e0b',
+                color: '#d97706',
+                border: '2px solid #f59e0b',
                 borderRadius: '0.5rem',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minWidth: '120px',
-                justifyContent: 'center'
+                minWidth: '100px',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                boxShadow: '0 1px 2px rgba(245, 158, 11, 0.1)'
               }}
               onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.currentTarget.style.backgroundColor = '#fef3c7'
                 e.currentTarget.style.borderColor = '#d97706'
+                e.currentTarget.style.color = '#b45309'
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(245, 158, 11, 0.2)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
               }}
               onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.currentTarget.style.backgroundColor = 'transparent'
               e.currentTarget.style.borderColor = '#f59e0b'
+              e.currentTarget.style.color = '#d97706'
+              e.currentTarget.style.boxShadow = '0 1px 2px rgba(245, 158, 11, 0.1)'
+              e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
               Login
@@ -419,29 +566,33 @@ function LandingPageContent() {
             <button
               onClick={() => setShowCreateAccount(true)}
               style={{
-                padding: '0.625rem 1.5rem',
-                backgroundColor: '#f59e0b',
+                padding: '0.625rem 1.25rem',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.5rem',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                boxShadow: '0 1px 2px rgba(245, 158, 11, 0.2)',
-                minWidth: '120px',
-                justifyContent: 'center'
+                boxShadow: '0 2px 4px rgba(245, 158, 11, 0.25), 0 1px 2px rgba(0, 0, 0, 0.1)',
+                minWidth: '100px',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
               onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.backgroundColor = '#d97706'
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(245, 158, 11, 0.3)'
+                e.currentTarget.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 100%)'
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(245, 158, 11, 0.35), 0 2px 4px rgba(0, 0, 0, 0.15)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
               }}
               onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.backgroundColor = '#f59e0b'
-                e.currentTarget.style.boxShadow = '0 1px 2px rgba(245, 158, 11, 0.2)'
+                e.currentTarget.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(245, 158, 11, 0.25), 0 1px 2px rgba(0, 0, 0, 0.1)'
+                e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
               Register
@@ -449,31 +600,38 @@ function LandingPageContent() {
             <a
               href="mailto:info@filmshoppee.com"
               style={{
-                padding: '0.625rem 1.5rem',
-                backgroundColor: '#f8fafc',
-                color: '#64748b',
-                border: '1px solid #e2e8f0',
+                padding: '0.625rem 1.25rem',
+                backgroundColor: '#fffbef',
+                color: '#78716c',
+                border: '1.5px solid #fde68a',
                 borderRadius: '0.5rem',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 textDecoration: 'none',
-                minWidth: '120px',
-                justifyContent: 'center'
+                minWidth: '100px',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                boxShadow: '0 1px 2px rgba(245, 158, 11, 0.08)'
               }}
               onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                e.currentTarget.style.backgroundColor = '#f1f5f9'
-                e.currentTarget.style.borderColor = '#cbd5e1'
-                e.currentTarget.style.color = '#475569'
+                e.currentTarget.style.backgroundColor = '#fef3c7'
+                e.currentTarget.style.borderColor = '#f59e0b'
+                e.currentTarget.style.color = '#d97706'
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(245, 158, 11, 0.15)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
               }}
               onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                e.currentTarget.style.backgroundColor = '#f8fafc'
-                e.currentTarget.style.borderColor = '#e2e8f0'
-                e.currentTarget.style.color = '#64748b'
+                e.currentTarget.style.backgroundColor = '#fffbef'
+                e.currentTarget.style.borderColor = '#fde68a'
+                e.currentTarget.style.color = '#78716c'
+                e.currentTarget.style.boxShadow = '0 1px 2px rgba(245, 158, 11, 0.08)'
+                e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
               <HelpCircle style={{ width: '1rem', height: '1rem' }} />
@@ -482,30 +640,37 @@ function LandingPageContent() {
             <button
               onClick={() => router.push('/about')}
               style={{
-                padding: '0.625rem 1.5rem',
-                backgroundColor: 'transparent',
-                color: '#64748b',
-                border: '1px solid #e2e8f0',
+                padding: '0.625rem 1.25rem',
+                backgroundColor: '#fffbef',
+                color: '#78716c',
+                border: '1.5px solid #fde68a',
                 borderRadius: '0.5rem',
                 fontWeight: '600',
                 fontSize: '0.875rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minWidth: '120px',
-                justifyContent: 'center'
+                minWidth: '100px',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                boxShadow: '0 1px 2px rgba(245, 158, 11, 0.08)'
               }}
               onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.backgroundColor = '#f1f5f9'
-                e.currentTarget.style.borderColor = '#cbd5e1'
-                e.currentTarget.style.color = '#475569'
+                e.currentTarget.style.backgroundColor = '#fef3c7'
+                e.currentTarget.style.borderColor = '#f59e0b'
+                e.currentTarget.style.color = '#d97706'
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(245, 158, 11, 0.15)'
+                e.currentTarget.style.transform = 'translateY(-1px)'
               }}
               onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.borderColor = '#e2e8f0'
-                e.currentTarget.style.color = '#64748b'
+                e.currentTarget.style.backgroundColor = '#fffbef'
+                e.currentTarget.style.borderColor = '#fde68a'
+                e.currentTarget.style.color = '#78716c'
+                e.currentTarget.style.boxShadow = '0 1px 2px rgba(245, 158, 11, 0.08)'
+                e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
               About
@@ -1697,19 +1862,21 @@ function LandingPageContent() {
       {/* Enhanced Footer */}
       <footer style={{
         padding: '4rem 2rem 2rem',
-        backgroundColor: '#1a1a1a',
-        color: 'white'
+        background: 'linear-gradient(to bottom, #0f172a 0%, #1e293b 100%)',
+        color: 'white',
+        borderTop: '2px solid rgba(245, 158, 11, 0.1)'
       }}>
         <div style={{
-          maxWidth: '1200px',
+          maxWidth: '1400px',
           margin: '0 auto'
         }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '3rem',
             marginBottom: '3rem',
             paddingBottom: '3rem',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             alignItems: 'flex-start'
           }}>
             {/* Brand Column */}
@@ -1720,12 +1887,23 @@ function LandingPageContent() {
               minWidth: '250px'
             }}>
               <div style={{ marginBottom: '1rem' }}>
-                <Logo size="medium" showText={true} variant="light" />
+                <Image
+                  src="/logo-nav.jpg"
+                  alt="FILMSHOPPEÉ - Car Facelift Studio"
+                  width={180}
+                  height={50}
+                  style={{
+                    objectFit: 'contain',
+                    maxWidth: '100%',
+                    height: 'auto',
+                    display: 'block'
+                  }}
+                />
               </div>
               <p style={{
-                margin: '0 0 1rem 0',
+                margin: '0 0 1.25rem 0',
                 fontSize: '0.9375rem',
-                color: '#9ca3af',
+                color: '#cbd5e1',
                 lineHeight: '1.7',
                 maxWidth: '100%',
                 textAlign: 'left'
@@ -1735,19 +1913,19 @@ function LandingPageContent() {
               
               {/* Co-Powered by Zoravo */}
               <div style={{
-                marginBottom: '1.5rem',
-                fontSize: '0.75rem',
-                color: '#6b7280',
-                letterSpacing: '0.02em',
+                marginBottom: '1.75rem',
+                fontSize: '0.8125rem',
+                color: '#94a3b8',
+                letterSpacing: '0.03em',
                 textAlign: 'left'
               }}>
-                <span style={{ fontWeight: 400 }}>Co-Powered by </span>
-                <span style={{ fontWeight: 600, color: '#9ca3af' }}>Zoravo</span>
+                <span style={{ fontWeight: 500 }}>Co-Powered by </span>
+                <span style={{ fontWeight: 700, color: '#f59e0b' }}>Zoravo</span>
               </div>
               
               <div style={{
                 display: 'flex',
-                gap: '1rem',
+                gap: '0.75rem',
                 alignItems: 'center',
                 flexWrap: 'wrap'
               }}>
@@ -1756,24 +1934,31 @@ function LandingPageContent() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    width: '2.5rem',
-                    height: '2.5rem',
+                    width: '2.75rem',
+                    height: '2.75rem',
                     borderRadius: '0.5rem',
-                    background: '#374151',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'white',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#E4405F'
+                    e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'
+                    e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'
+                    e.currentTarget.style.color = '#f59e0b'
                     e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(245, 158, 11, 0.2)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#374151'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                    e.currentTarget.style.color = '#cbd5e1'
                     e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
                   <Instagram style={{ width: '1.25rem', height: '1.25rem' }} />
@@ -1783,24 +1968,31 @@ function LandingPageContent() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    width: '2.5rem',
-                    height: '2.5rem',
+                    width: '2.75rem',
+                    height: '2.75rem',
                     borderRadius: '0.5rem',
-                    background: '#374151',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'white',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#1877F2'
+                    e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'
+                    e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'
+                    e.currentTarget.style.color = '#f59e0b'
                     e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(245, 158, 11, 0.2)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#374151'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                    e.currentTarget.style.color = '#cbd5e1'
                     e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
                   <Facebook style={{ width: '1.25rem', height: '1.25rem' }} />
@@ -1810,24 +2002,31 @@ function LandingPageContent() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    width: '2.5rem',
-                    height: '2.5rem',
+                    width: '2.75rem',
+                    height: '2.75rem',
                     borderRadius: '0.5rem',
-                    background: '#374151',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'white',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#FF0000'
+                    e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'
+                    e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'
+                    e.currentTarget.style.color = '#f59e0b'
                     e.currentTarget.style.transform = 'translateY(-2px)'
+                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(245, 158, 11, 0.2)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#374151'
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'
+                    e.currentTarget.style.color = '#cbd5e1'
                     e.currentTarget.style.transform = 'translateY(0)'
+                    e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
                   <Youtube style={{ width: '1.25rem', height: '1.25rem' }} />
@@ -1844,16 +2043,17 @@ function LandingPageContent() {
               <h4 style={{
                 fontSize: '1rem',
                 fontWeight: '700',
-                color: 'white',
-                margin: '0 0 1rem 0',
-                textAlign: 'left'
+                color: '#ffffff',
+                margin: '0 0 1.25rem 0',
+                textAlign: 'left',
+                letterSpacing: '0.02em'
               }}>
                 Company
               </h4>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem',
+                gap: '0.875rem',
                 alignItems: 'flex-start',
                 width: '100%'
               }}>
@@ -1861,15 +2061,18 @@ function LandingPageContent() {
                   href="/about"
                   style={{
                     fontSize: '0.875rem',
-                    color: '#9ca3af',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
-                    transition: 'color 0.2s'
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    lineHeight: '1.5'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.color = '#f59e0b'
+                    e.currentTarget.style.transform = 'translateX(4px)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#9ca3af'
+                    e.currentTarget.style.color = '#cbd5e1'
+                    e.currentTarget.style.transform = 'translateX(0)'
                   }}
                 >
                   About
@@ -1878,15 +2081,18 @@ function LandingPageContent() {
                   href="/pricing"
                   style={{
                     fontSize: '0.875rem',
-                    color: '#9ca3af',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
-                    transition: 'color 0.2s'
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    lineHeight: '1.5'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.color = '#f59e0b'
+                    e.currentTarget.style.transform = 'translateX(4px)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#9ca3af'
+                    e.currentTarget.style.color = '#cbd5e1'
+                    e.currentTarget.style.transform = 'translateX(0)'
                   }}
                 >
                   Pricing
@@ -1895,15 +2101,18 @@ function LandingPageContent() {
                   href="mailto:info@zoravo.in?subject=Support Request&body=Hello,%0D%0A%0D%0AI need assistance with Zoravo OMS.%0D%0A%0D%0AThank you."
                   style={{
                     fontSize: '0.875rem',
-                    color: '#9ca3af',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
-                    transition: 'color 0.2s'
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    lineHeight: '1.5'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.color = '#f59e0b'
+                    e.currentTarget.style.transform = 'translateX(4px)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#9ca3af'
+                    e.currentTarget.style.color = '#cbd5e1'
+                    e.currentTarget.style.transform = 'translateX(0)'
                   }}
                 >
                   Support
@@ -1912,15 +2121,18 @@ function LandingPageContent() {
                   href="mailto:info@zoravo.in?subject=Contact Request&body=Hello,%0D%0A%0D%0AI would like to get in touch regarding Zoravo OMS.%0D%0A%0D%0AThank you."
                   style={{
                     fontSize: '0.875rem',
-                    color: '#9ca3af',
+                    color: '#cbd5e1',
                     textDecoration: 'none',
-                    transition: 'color 0.2s'
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    lineHeight: '1.5'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'white'
+                    e.currentTarget.style.color = '#f59e0b'
+                    e.currentTarget.style.transform = 'translateX(4px)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#9ca3af'
+                    e.currentTarget.style.color = '#cbd5e1'
+                    e.currentTarget.style.transform = 'translateX(0)'
                   }}
                 >
                   Contact
@@ -1937,16 +2149,17 @@ function LandingPageContent() {
               <h4 style={{
                 fontSize: '1rem',
                 fontWeight: '700',
-                color: 'white',
-                margin: '0 0 1rem 0',
-                textAlign: 'left'
+                color: '#ffffff',
+                margin: '0 0 1.25rem 0',
+                textAlign: 'left',
+                letterSpacing: '0.02em'
               }}>
                 Product
               </h4>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem',
+                gap: '0.875rem',
                 alignItems: 'flex-start',
                 width: '100%'
               }}>
@@ -1956,15 +2169,18 @@ function LandingPageContent() {
                     href="#"
                     style={{
                       fontSize: '0.875rem',
-                      color: '#9ca3af',
+                      color: '#cbd5e1',
                       textDecoration: 'none',
-                      transition: 'color 0.2s'
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      lineHeight: '1.5'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'white'
+                      e.currentTarget.style.color = '#f59e0b'
+                      e.currentTarget.style.transform = 'translateX(4px)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#9ca3af'
+                      e.currentTarget.style.color = '#cbd5e1'
+                      e.currentTarget.style.transform = 'translateX(0)'
                     }}
                   >
                     {link}
@@ -1982,16 +2198,17 @@ function LandingPageContent() {
               <h4 style={{
                 fontSize: '1rem',
                 fontWeight: '700',
-                color: 'white',
-                margin: '0 0 1rem 0',
-                textAlign: 'left'
+                color: '#ffffff',
+                margin: '0 0 1.25rem 0',
+                textAlign: 'left',
+                letterSpacing: '0.02em'
               }}>
                 Resources
               </h4>
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem',
+                gap: '0.875rem',
                 alignItems: 'flex-start',
                 width: '100%'
               }}>
@@ -2001,15 +2218,18 @@ function LandingPageContent() {
                     href="#"
                     style={{
                       fontSize: '0.875rem',
-                      color: '#9ca3af',
+                      color: '#cbd5e1',
                       textDecoration: 'none',
-                      transition: 'color 0.2s'
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      lineHeight: '1.5'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'white'
+                      e.currentTarget.style.color = '#f59e0b'
+                      e.currentTarget.style.transform = 'translateX(4px)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.color = '#9ca3af'
+                      e.currentTarget.style.color = '#cbd5e1'
+                      e.currentTarget.style.transform = 'translateX(0)'
                     }}
                   >
                     {link}
@@ -2024,15 +2244,14 @@ function LandingPageContent() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            paddingTop: '1.5rem',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
+            paddingTop: '2rem',
             flexWrap: 'wrap',
             gap: '1rem'
           }}>
             <p style={{
               margin: 0,
               fontSize: '0.875rem',
-              color: '#6b7280',
+              color: '#94a3b8',
               textAlign: 'left',
               flex: '1 1 auto',
               minWidth: '200px'
@@ -2043,12 +2262,43 @@ function LandingPageContent() {
               display: 'flex',
               gap: '2rem',
               fontSize: '0.875rem',
-              color: '#6b7280',
               flexWrap: 'wrap',
               alignItems: 'center'
             }}>
-              <a href="#" style={{ color: '#6b7280', textDecoration: 'none', whiteSpace: 'nowrap' }}>Privacy Policy</a>
-              <a href="#" style={{ color: '#6b7280', textDecoration: 'none', whiteSpace: 'nowrap' }}>Terms of Service</a>
+              <a 
+                href="#" 
+                style={{ 
+                  color: '#94a3b8', 
+                  textDecoration: 'none', 
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#f59e0b'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#94a3b8'
+                }}
+              >
+                Privacy Policy
+              </a>
+              <a 
+                href="#" 
+                style={{ 
+                  color: '#94a3b8', 
+                  textDecoration: 'none', 
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#f59e0b'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#94a3b8'
+                }}
+              >
+                Terms of Service
+              </a>
             </div>
           </div>
         </div>

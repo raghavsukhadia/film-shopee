@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Settings, Save, Globe, Shield, DollarSign, Clock, Plus, Trash2, Edit, X, Mail, Eye, EyeOff } from 'lucide-react'
+import { Settings, Save, Globe, Shield, DollarSign, Clock, Plus, Trash2, Edit, X, Mail, Eye, EyeOff, Database, Download, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface SubscriptionPlan {
@@ -67,9 +67,17 @@ export default function PlatformSettingsPage() {
   })
   const [showApiKey, setShowApiKey] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'general' | 'subscription' | 'email'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'subscription' | 'email' | 'database'>('general')
   const [editingPlan, setEditingPlan] = useState<number | null>(null)
   const [showAddPlan, setShowAddPlan] = useState(false)
+  // Database tab state
+  const [tenants, setTenants] = useState<any[]>([])
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('')
+  const [loadingTenants, setLoadingTenants] = useState(false)
+  const [creatingBackup, setCreatingBackup] = useState(false)
+  const [backupProgress, setBackupProgress] = useState('')
+  const [backupReady, setBackupReady] = useState(false)
+  const [backupUrl, setBackupUrl] = useState<string | null>(null)
   const [newPlan, setNewPlan] = useState<Partial<SubscriptionPlan>>({
     plan_name: '',
     plan_display_name: '',
@@ -85,7 +93,10 @@ export default function PlatformSettingsPage() {
 
   useEffect(() => {
     loadSettings()
-  }, [])
+    if (activeTab === 'database') {
+      loadTenants()
+    }
+  }, [activeTab])
 
   const loadSettings = async () => {
     try {
@@ -194,6 +205,106 @@ export default function PlatformSettingsPage() {
     } catch (error) {
       console.error('Error loading settings:', error)
     }
+  }
+
+  const loadTenants = async () => {
+    try {
+      setLoadingTenants(true)
+      const { data: tenantsData, error } = await supabase
+        .from('tenants')
+        .select('id, name, tenant_code, workspace_url')
+        .order('tenant_code', { ascending: true })
+
+      if (error) throw error
+      setTenants(tenantsData || [])
+    } catch (error) {
+      console.error('Error loading tenants:', error)
+    } finally {
+      setLoadingTenants(false)
+    }
+  }
+
+  const handleCreateBackup = async () => {
+    if (!selectedTenantId) {
+      alert('Please select a tenant first')
+      return
+    }
+
+    try {
+      setCreatingBackup(true)
+      setBackupProgress('Initializing backup...')
+      setBackupReady(false)
+      setBackupUrl(null)
+
+      setBackupProgress('Exporting tenant data...')
+      const response = await fetch('/api/admin/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenant_id: selectedTenantId })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to create backup')
+      }
+
+      setBackupProgress('Creating ZIP archive...')
+      
+      // Get the blob from response
+      const blob = await response.blob()
+      
+      // Check if response is actually a ZIP file
+      if (blob.type !== 'application/zip' && blob.size === 0) {
+        // Try to parse as JSON error
+        const text = await blob.text()
+        try {
+          const errorData = JSON.parse(text)
+          throw new Error(errorData.error || 'Failed to create backup')
+        } catch {
+          throw new Error('Received invalid response from server')
+        }
+      }
+      
+      // Create download URL
+      const url = window.URL.createObjectURL(blob)
+      setBackupUrl(url)
+      setBackupReady(true)
+      setBackupProgress('Backup created successfully! Ready to download.')
+    } catch (error: any) {
+      console.error('Error creating backup:', error)
+      const errorMessage = error.message || 'Unknown error occurred. Please try again.'
+      setBackupProgress(`Error: ${errorMessage}`)
+      setBackupReady(false)
+      setBackupUrl(null)
+      
+      // Show error alert
+      setTimeout(() => {
+        alert(`Failed to create backup: ${errorMessage}`)
+      }, 100)
+    } finally {
+      setCreatingBackup(false)
+    }
+  }
+
+  const handleDownloadBackup = () => {
+    if (!backupUrl) return
+
+    const selectedTenant = tenants.find(t => t.id === selectedTenantId)
+    const tenantCode = selectedTenant?.tenant_code || 'tenant'
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+    const filename = `backup_${tenantCode}_${timestamp}.zip`
+
+    const link = document.createElement('a')
+    link.href = backupUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    // Clean up the object URL after a delay
+    setTimeout(() => {
+      window.URL.revokeObjectURL(backupUrl)
+    }, 100)
   }
 
   const handleSaveGeneral = async () => {
@@ -385,7 +496,14 @@ export default function PlatformSettingsPage() {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}} />
+      <div style={{ padding: '2rem' }}>
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{
           fontSize: '1.875rem',
@@ -417,11 +535,12 @@ export default function PlatformSettingsPage() {
           {[
             { id: 'general', label: 'General', icon: Globe },
             { id: 'subscription', label: 'Subscription', icon: Shield },
-            { id: 'email', label: 'Email', icon: Mail }
+            { id: 'email', label: 'Email', icon: Mail },
+            { id: 'database', label: 'Database', icon: Database }
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as 'general' | 'subscription' | 'email')}
+              onClick={() => setActiveTab(tab.id as 'general' | 'subscription' | 'email' | 'database')}
               style={{
                 padding: '1rem 1.5rem',
                 borderBottom: activeTab === tab.id ? '2px solid #2563eb' : '2px solid transparent',
@@ -1454,8 +1573,180 @@ export default function PlatformSettingsPage() {
               </div>
             </div>
           )}
+
+          {/* Database Tab */}
+          {activeTab === 'database' && (
+            <div>
+              <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  color: '#1f2937',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <Database style={{ width: '1.25rem', height: '1.25rem' }} />
+                  Database Management
+                </h2>
+                <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '2rem' }}>
+                  Manage tenant database backups. Select a tenant to view statistics and create backups.
+                </p>
+
+                {/* Tenant Selector */}
+                <div style={{ marginBottom: '2rem' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Select Tenant
+                  </label>
+                  <select
+                    value={selectedTenantId}
+                    onChange={(e) => {
+                      setSelectedTenantId(e.target.value)
+                      setBackupReady(false)
+                      setBackupUrl(null)
+                    }}
+                    disabled={loadingTenants}
+                    style={{
+                      width: '100%',
+                      maxWidth: '500px',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      backgroundColor: loadingTenants ? '#f3f4f6' : 'white',
+                      cursor: loadingTenants ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <option value="">-- Select a tenant --</option>
+                    {tenants.map(tenant => (
+                      <option key={tenant.id} value={tenant.id}>
+                        {tenant.tenant_code} - {tenant.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Backup Actions */}
+                {selectedTenantId && (
+                  <div style={{
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0.75rem',
+                    padding: '1.5rem'
+                  }}>
+                    <h3 style={{
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      color: '#1f2937',
+                      marginBottom: '1rem'
+                    }}>
+                      Backup Management
+                    </h3>
+
+                    {backupProgress && (
+                      <div style={{
+                        padding: '0.75rem',
+                        backgroundColor: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '0.5rem',
+                        marginBottom: '1rem',
+                        fontSize: '0.875rem',
+                        color: '#1e40af',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        {creatingBackup && <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
+                        {backupProgress}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                      <button
+                        onClick={handleCreateBackup}
+                        disabled={creatingBackup || !selectedTenantId}
+                        style={{
+                          padding: '0.75rem 1.5rem',
+                          backgroundColor: creatingBackup ? '#9ca3af' : '#2563eb',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '0.5rem',
+                          fontWeight: '500',
+                          cursor: creatingBackup || !selectedTenantId ? 'not-allowed' : 'pointer',
+                          fontSize: '0.875rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}
+                      >
+                        {creatingBackup ? (
+                          <>
+                            <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />
+                            Creating Backup...
+                          </>
+                        ) : (
+                          <>
+                            <Database style={{ width: '1rem', height: '1rem' }} />
+                            Create Backup
+                          </>
+                        )}
+                      </button>
+
+                      {backupReady && backupUrl && (
+                        <button
+                          onClick={handleDownloadBackup}
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            backgroundColor: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '0.5rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                          }}
+                        >
+                          <Download style={{ width: '1rem', height: '1rem' }} />
+                          Download Backup
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{
+                      marginTop: '1.5rem',
+                      padding: '1rem',
+                      backgroundColor: '#f9fafb',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.75rem',
+                      color: '#6b7280',
+                      lineHeight: '1.6'
+                    }}>
+                      <p style={{ margin: '0 0 0.5rem 0', fontWeight: '600', color: '#374151' }}>Backup Information:</p>
+                      <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                        <li>Backup includes all tenant-specific data (vehicles, customers, invoices, work orders, etc.)</li>
+                        <li>Data is exported as JSON files in a ZIP archive</li>
+                        <li>Backups can be used for data migration or disaster recovery</li>
+                        <li>Large datasets may take several minutes to process</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
+    </>
   )
 }

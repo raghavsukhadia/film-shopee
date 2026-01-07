@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Car, Search, Eye, MessageSquare, Calendar, CheckCircle, AlertCircle, Plus, Edit, Trash2, X, Upload, Send, ChevronLeft, FileText } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
 
 export default function ServiceTrackerPageClient() {
   const [services, setServices] = useState<any[]>([])

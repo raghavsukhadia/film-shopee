@@ -4,24 +4,42 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
   const hostname = request.headers.get('host') || ''
   
-  // Extract subdomain (workspace URL) from hostname
+  // Extract workspace URL from hostname
   // Examples:
-  // - rs-car-accessories-nagpur.zoravo-oms.vercel.app → workspace: rs-car-accessories-nagpur
-  // - zoravo-oms.vercel.app → no workspace (main domain)
+  // - filmshopeezoravofs01.in → workspace: filmshopeezoravofs01
+  // - filmshopeezoravo.in → no workspace (main domain for admin)
   // - localhost:3000 → no workspace (development)
+  // - Legacy: rs-car-accessories-nagpur.zoravo-oms.vercel.app → workspace: rs-car-accessories-nagpur
   
   const parts = hostname.split('.')
   let workspaceUrl: string | null = null
   
-  // Check if we have a subdomain (more than 2 parts means subdomain exists)
-  // For production: workspace.domain.com (3 parts)
-  // For Vercel: workspace.project.vercel.app (4 parts)
-  // For localhost: localhost:3000 (1 part, no subdomain)
-  
-  if (parts.length >= 3) {
+  // New domain format: filmshopeezoravofs01.in (2 parts: domain.tld)
+  if (parts.length === 2) {
+    const domain = parts[0] // e.g., "filmshopeezoravofs01"
+    const tld = parts[1] // e.g., "in"
+    
+    // Check if it's the new .in domain format
+    if (tld === 'in') {
+      // Main domain for admin access - no workspace
+      if (domain === 'filmshopeezoravo') {
+        workspaceUrl = null
+      }
+      // Tenant domain: filmshopeezoravofs01, filmshopeezoravofs02, etc.
+      else if (domain.startsWith('filmshopeezoravo') && domain.match(/^filmshopeezoravofs\d+$/i)) {
+        workspaceUrl = domain // Return full domain name as workspace URL
+      }
+      // Legacy support: if domain doesn't match new pattern, return as-is
+      else {
+        workspaceUrl = domain
+      }
+    }
+  }
+  // Legacy support: For Vercel deployments and old subdomain format
+  // workspace.domain.com (3 parts) or workspace.project.vercel.app (4 parts)
+  else if (parts.length >= 3) {
     // Check if it's not a known domain pattern (like vercel.app, localhost, etc.)
     const knownDomains = ['vercel.app', 'localhost', '127.0.0.1']
-    const domainPart = parts.slice(-2).join('.')
     
     if (!knownDomains.some(d => hostname.includes(d))) {
       // Custom domain or subdomain pattern

@@ -60,7 +60,7 @@ export default function FilmshoppeeLogo({
       }}
     >
       <Image
-        src="/filmshoppee-logo.png"
+        src="/logo-nav.jpg"
         alt="Filmshoppee-Car Facelift Studio"
         width={config.width}
         height={config.height}

@@ -2,14 +2,16 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import Sidebar from '@/components/sidebar'
-import Topbar from '@/components/topbar'
-import SubscriptionGuard from '@/components/SubscriptionGuard'
+import Sidebar from '@/components/layout/sidebar'
+import Topbar from '@/components/layout/topbar'
+import SubscriptionGuard from '@/components/layout/SubscriptionGuard'
 import { createClient } from '@/lib/supabase/client'
-import { checkUserRole, type UserRole } from '@/lib/rbac'
-import { getWorkspaceUrl, initializeTenantFromWorkspace } from '@/lib/workspace-detector'
-import { getCurrentTenantId } from '@/lib/tenant-context'
-import { safeGetUser, handleAuthError } from '@/lib/auth-error-handler'
+import { checkUserRole, type UserRole } from '@/lib/helpers/rbac'
+import { getWorkspaceUrl, initializeTenantFromWorkspace } from '@/lib/helpers/workspace-detector'
+import { getCurrentTenantId } from '@/lib/helpers/tenant-context'
+import { safeGetUser, handleAuthError, isSessionExpired } from '@/lib/helpers/auth-error-handler'
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
+import { logger } from '@/lib/utils/logger'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -71,8 +73,26 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
       )
       .subscribe()
 
+    // Periodic session expiration check (every 30 seconds)
+    const sessionCheckInterval = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session && isSessionExpired(session)) {
+          logger.warn('Session expired detected in periodic check', {}, 'DashboardLayout')
+          await supabase.auth.signOut()
+          sessionStorage.clear()
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+            window.location.href = '/login'
+          }
+        }
+      } catch (error) {
+        // Ignore errors in periodic check
+      }
+    }, 30000) // Check every 30 seconds
+
     return () => {
       supabase.removeChannel(channel)
+      clearInterval(sessionCheckInterval)
     }
   }, [isAdminRoute, searchParams])
 
@@ -90,7 +110,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
       
       // If error was handled (refresh token error), safeGetUser already redirected
       if (!user && userError) {
-        console.error('Error getting user:', userError)
+        logger.error('Error getting user', userError, 'DashboardLayout')
         setLoading(false)
         return
       }
@@ -176,7 +196,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
         }
       }
     } catch (error) {
-      console.error('Error loading user data:', error)
+      logger.error('Error loading user data', error, 'DashboardLayout')
     } finally {
       setLoading(false)
     }
@@ -216,7 +236,9 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
             overflow: 'auto', 
             padding: isMobile ? '1rem' : '1.5rem' 
           }}>
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </main>
         </div>
       </div>

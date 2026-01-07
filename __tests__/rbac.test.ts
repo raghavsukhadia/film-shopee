@@ -16,7 +16,7 @@ import {
   ROUTE_PERMISSIONS,
   API_ROUTE_PERMISSIONS,
   ROLE_HIERARCHY
-} from '@/lib/rbac'
+} from '@/lib/helpers/rbac'
 
 describe('RBAC System', () => {
   describe('Route Access Control', () => {

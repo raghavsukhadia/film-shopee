@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { generateDailyReportPDF, VehicleReportData } from '@/lib/pdf-service'
-import { sendDailyReportEmail } from '@/lib/email-service'
-import { sendDailyReportViaWhatsApp, getManagerPhoneNumber } from '@/lib/whatsapp-report-service'
+import { generateDailyReportPDF, VehicleReportData } from '@/lib/services/pdf-service'
+import { sendDailyReportEmail } from '@/lib/services/email-service'
+import { sendDailyReportViaWhatsApp, getManagerPhoneNumber } from '@/lib/services/whatsapp-report-service'
 
 /**
  * API Route: POST /api/reports/daily-vehicle-report

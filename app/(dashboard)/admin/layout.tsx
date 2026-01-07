@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { safeGetUser } from '@/lib/auth-error-handler'
+import { safeGetUser } from '@/lib/helpers/auth-error-handler'
 import {
   LayoutDashboard,
   Building2,
@@ -162,16 +162,43 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       }}>
         {/* Logo */}
         <div style={{
-          padding: '1.5rem',
+          padding: '1.75rem 1.5rem',
           borderBottom: '1px solid #334155',
           display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem'
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: '0.875rem'
         }}>
-          <Logo size="small" showText={false} variant="light" />
-          <div>
-            <div style={{ fontSize: '1rem', fontWeight: '600' }}>ZORAVO Admin</div>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Platform Management</div>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            width: '100%',
+            marginBottom: '0.25rem'
+          }}>
+            <Logo size="medium" showText={false} variant="light" />
+          </div>
+          <div style={{
+            fontSize: '0.875rem',
+            color: '#cbd5e1',
+            letterSpacing: '0.03em',
+            textAlign: 'left',
+            lineHeight: '1.5',
+            width: '100%',
+            marginTop: '0.125rem'
+          }}>
+            <span style={{ fontWeight: 500 }}>Co-Powered by </span>
+            <span style={{ fontWeight: 700, color: '#f59e0b' }}>Zoravo</span>
+          </div>
+          <div style={{ 
+            fontSize: '0.9375rem', 
+            color: '#94a3b8',
+            fontWeight: '600',
+            textAlign: 'left',
+            width: '100%',
+            letterSpacing: '0.02em'
+          }}>
+            Platform Management
           </div>
         </div>
 

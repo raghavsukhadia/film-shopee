@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Car, Save, ArrowLeft, Plus, Trash2, Calendar, Clock, User, Phone, Building, MapPin, FileText, Package, DollarSign, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
+import { logger } from '@/lib/utils/logger'
 
 interface ProductItem {
   product: string
@@ -17,6 +18,7 @@ export default function VehicleInwardPageClient() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const { toast } = useToast()
   
   const [currentDateTime, setCurrentDateTime] = useState<string>('')
   const [managers, setManagers] = useState<any[]>([])
@@ -53,6 +55,13 @@ export default function VehicleInwardPageClient() {
     // Product List (handled separately)
   })
 
+  // Auto-save form data
+  const { restoreSavedData, clearSavedData } = useFormAutoSave({
+    formKey: 'vehicle_inward_new',
+    data: formData,
+    enabled: true
+  })
+
   useEffect(() => {
     // Set IST date and time
     const now = new Date()
@@ -70,11 +79,22 @@ export default function VehicleInwardPageClient() {
     })
     
     setCurrentDateTime(`${istDate} ${istTime}`)
-    setFormData(prev => ({
-      ...prev,
-      currentDate: istDate,
-      currentTime: istTime
-    }))
+    
+    // Restore auto-saved form data if available
+    const savedData = restoreSavedData()
+    if (savedData) {
+      setFormData({
+        ...savedData,
+        currentDate: istDate,
+        currentTime: istTime
+      })
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        currentDate: istDate,
+        currentTime: istTime
+      }))
+    }
 
     // Load dropdown data
     loadManagers()
@@ -97,7 +117,7 @@ export default function VehicleInwardPageClient() {
           .in('role', ['manager', 'admin'])
         
         if (tenantUsersError) {
-          console.error('Error fetching tenant users for managers:', tenantUsersError)
+          logger.error('Error fetching tenant users for managers', tenantUsersError, 'VehicleInwardPageClient')
           setManagers([])
           return
         }
@@ -111,7 +131,7 @@ export default function VehicleInwardPageClient() {
             .order('name', { ascending: true })
           
           if (error) {
-            console.error('Error fetching manager profiles:', error)
+            logger.error('Error fetching manager profiles', error, 'VehicleInwardPageClient')
             setManagers([])
             return
           }
@@ -128,15 +148,14 @@ export default function VehicleInwardPageClient() {
           .order('name', { ascending: true })
         
         if (error) {
-          console.error('Error fetching all managers:', error)
+          logger.error('Error fetching all managers', error, 'VehicleInwardPageClient')
           setManagers([])
           return
         }
         setManagers(data || [])
       }
     } catch (error: any) {
-      console.error('Error loading managers:', error)
-      console.error('Full error:', JSON.stringify(error, null, 2))
+      logger.error('Error loading managers', error, 'VehicleInwardPageClient')
       setManagers([])
     }
   }
@@ -161,8 +180,8 @@ export default function VehicleInwardPageClient() {
       if (error) {
         // Check if error is due to missing tenant_id column (PostgreSQL error code 42703 = undefined_column)
         if (error.code === '42703' && error.message?.includes('tenant_id')) {
-          console.error('❌ ERROR: tenant_id column is missing in locations table.')
-          console.error('📋 SOLUTION: Please run database/multi_tenant_schema.sql in Supabase SQL Editor to add tenant_id column.')
+          logger.error('ERROR: tenant_id column is missing in locations table', undefined, 'VehicleInwardPageClient')
+          logger.warn('SOLUTION: Please run database/multi_tenant_schema.sql in Supabase SQL Editor to add tenant_id column', undefined, 'VehicleInwardPageClient')
           alert('Database migration required: Please run database/multi_tenant_schema.sql in Supabase SQL Editor to add tenant_id column to locations table.')
         } else {
           throw error
@@ -171,10 +190,10 @@ export default function VehicleInwardPageClient() {
         return
       }
       
-      console.log('Loaded locations from database:', data)
+      logger.debug('Loaded locations from database', data, 'VehicleInwardPageClient')
       setLocations(data || [])
     } catch (error) {
-      console.error('Error loading locations:', error)
+      logger.error('Error loading locations', error, 'VehicleInwardPageClient')
       alert('Could not load locations. Please add locations in Settings first.')
       setLocations([])
     }
@@ -199,8 +218,8 @@ export default function VehicleInwardPageClient() {
       const { data, error } = await query
       
       if (error) {
-        console.error('Error loading vehicle types:', error)
-        console.error('Error details:', {
+        logger.error('Error loading vehicle types', error, 'VehicleInwardPageClient')
+        logger.error('Error details', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -212,8 +231,7 @@ export default function VehicleInwardPageClient() {
       
       setVehicleTypes(data || [])
     } catch (error: any) {
-      console.error('Error loading vehicle types:', error)
-      console.error('Full error:', JSON.stringify(error, null, 2))
+      logger.error('Error loading vehicle types', error, 'VehicleInwardPageClient')
       setVehicleTypes([])
     }
   }
@@ -237,8 +255,8 @@ export default function VehicleInwardPageClient() {
       const { data, error } = await query
       
       if (error) {
-        console.error('Error loading departments:', error)
-        console.error('Error details:', {
+        logger.error('Error loading departments', error, 'VehicleInwardPageClient')
+        logger.error('Error details', {
           code: error.code,
           message: error.message,
           details: error.details,
@@ -250,7 +268,7 @@ export default function VehicleInwardPageClient() {
       
       setDepartments(data || [])
     } catch (error) {
-      console.error('Error loading departments:', error)
+      logger.error('Error loading departments', error, 'VehicleInwardPageClient')
       setDepartments([])
     }
   }
@@ -278,8 +296,45 @@ export default function VehicleInwardPageClient() {
   const handleSubmit = async () => {
     // Validation
     if (!formData.ownerName || !formData.mobileNumber || !formData.vehicleNumber || !formData.modelName || !formData.issuesReported.trim()) {
-      alert('Please fill in all required fields (Owner Name, Mobile Number, Vehicle Number, Model Name, Issues Reported)')
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields (Owner Name, Mobile Number, Vehicle Number, Model Name, Issues Reported)',
+        variant: 'destructive'
+      })
       return
+    }
+
+    // Check for duplicate email if email is provided
+    if (formData.email && formData.email.trim()) {
+      const tenantId = getCurrentTenantId()
+      const isSuper = isSuperAdmin()
+      
+      let emailCheckQuery = supabase
+        .from('vehicle_inward')
+        .select('id, customer_name, registration_number')
+        .eq('customer_email', formData.email.trim().toLowerCase())
+        .neq('status', 'delivered') // Only check active entries
+      
+      if (!isSuper && tenantId) {
+        emailCheckQuery = emailCheckQuery.eq('tenant_id', tenantId)
+      }
+      
+      const { data: existingEntries, error: emailCheckError } = await emailCheckQuery
+      
+      if (emailCheckError) {
+        logger.error('Error checking duplicate email', emailCheckError, 'VehicleInwardPageClient')
+        // Continue with submission if check fails (don't block user)
+      } else if (existingEntries && existingEntries.length > 0) {
+        const existingEntry = existingEntries[0]
+        const confirmMessage = `This email (${formData.email}) is already associated with an existing vehicle entry:\n\n` +
+          `Customer: ${existingEntry.customer_name}\n` +
+          `Vehicle: ${existingEntry.registration_number}\n\n` +
+          `Do you want to continue anyway?`
+        
+        if (!confirm(confirmMessage)) {
+          return
+        }
+      }
     }
 
     setIsSubmitting(true)
@@ -329,7 +384,7 @@ export default function VehicleInwardPageClient() {
         .single()
 
       if (error) {
-        console.error('Error creating vehicle inward:', error)
+        logger.error('Error creating vehicle inward', error, 'VehicleInwardPageClient')
         throw error
       }
       
@@ -338,16 +393,28 @@ export default function VehicleInwardPageClient() {
         const { notificationWorkflow } = await import('@/lib/notification-workflow')
         await notificationWorkflow.notifyVehicleCreated(data.id, { ...payload, id: data.id })
       } catch (notifError) {
-        console.error('Error sending notification:', notifError)
+        logger.error('Error sending notification', notifError, 'VehicleInwardPageClient')
         // Don't block success if notification fails
       }
       
-      alert('Vehicle inward submitted successfully!')
+      // Clear auto-saved data on successful submission
+      clearSavedData()
+      
+      toast({
+        title: 'Success',
+        description: 'Vehicle inward submitted successfully!',
+        variant: 'default'
+      })
+      
       router.push('/inward')
       
     } catch (error: any) {
-      console.error('Error submitting vehicle inward:', error)
-      alert(`Failed to submit vehicle inward: ${error.message}`)
+      logger.error('Error submitting vehicle inward', error, 'VehicleInwardPageClient')
+      toast({
+        title: 'Error',
+        description: `Failed to submit vehicle inward: ${error.message}`,
+        variant: 'destructive'
+      })
     } finally {
       setIsSubmitting(false)
     }

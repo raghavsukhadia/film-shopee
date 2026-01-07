@@ -76,8 +76,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Generate workspace_url from tenant_code (e.g., FS01 -> tenant-fs01)
-    const workspaceUrl = `tenant-${nextCode.toLowerCase()}`
+    // Generate workspace_url from tenant_code (e.g., FS01 -> filmshopeezoravofs01)
+    const workspaceUrl = `filmshopeezoravo${nextCode.toLowerCase()}`
 
     // Set trial period to 24 hours from now
     const trialEndsAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()

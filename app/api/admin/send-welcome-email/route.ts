@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NextResponse } from 'next/server'
-import { sendWelcomeEmail } from '@/lib/email-service'
+import { sendWelcomeEmail } from '@/lib/services/email-service'
 
 // Test endpoint to verify route is working
 export async function GET() {
@@ -225,9 +225,8 @@ export async function POST(request: Request) {
     const pricingAmount = subscription?.amount || 12000
     const currency = subscription?.currency || 'INR'
 
-    // Generate login URL - use environment variable or default to zoravo.in
-    const baseDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'zoravo.in'
-    const loginUrl = `https://${tenant.workspace_url}.${baseDomain}/login`
+    // Generate login URL - new format: filmshopeezoravofs01.in
+    const loginUrl = `https://${tenant.workspace_url}.in/login`
 
     // Send welcome email
     const emailResult = await sendWelcomeEmail({

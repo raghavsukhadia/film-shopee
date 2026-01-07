@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Car, Save, ArrowLeft, Plus, Trash2, Calendar, Clock, User, Phone, Building, MapPin, FileText, Package, DollarSign, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
+import { logger } from '@/lib/utils/logger'
 
 interface ProductItem {
   product: string
@@ -120,7 +121,7 @@ export default function EditVehicleInwardPageClient() {
         setProducts(parsedProducts.length > 0 ? parsedProducts : [{ product: '', brand: '', price: '', department: '' }])
       }
     } catch (error) {
-      console.error('Error loading record:', error)
+      logger.error('Error loading record', error, 'EditVehicleInwardPageClient')
       alert('Failed to load vehicle data')
     } finally {
       setIsLoading(false)
@@ -141,7 +142,7 @@ export default function EditVehicleInwardPageClient() {
           .in('role', ['manager', 'admin'])
         
         if (tenantUsersError) {
-          console.error('Error fetching tenant users for managers:', tenantUsersError)
+          logger.error('Error fetching tenant users for managers', tenantUsersError, 'EditVehicleInwardPageClient')
           setManagers([])
           return
         }
@@ -155,7 +156,7 @@ export default function EditVehicleInwardPageClient() {
             .order('name', { ascending: true })
           
           if (error) {
-            console.error('Error fetching manager profiles:', error)
+            logger.error('Error fetching manager profiles', error, 'EditVehicleInwardPageClient')
             setManagers([])
             return
           }
@@ -172,15 +173,14 @@ export default function EditVehicleInwardPageClient() {
           .order('name', { ascending: true })
         
         if (error) {
-          console.error('Error fetching all managers:', error)
+          logger.error('Error fetching all managers', error, 'EditVehicleInwardPageClient')
           setManagers([])
           return
         }
         setManagers(data || [])
       }
     } catch (error: any) {
-      console.error('Error loading managers:', error)
-      console.error('Full error:', JSON.stringify(error, null, 2))
+      logger.error('Error loading managers', error, 'EditVehicleInwardPageClient')
       setManagers([])
     }
   }
@@ -206,7 +206,7 @@ export default function EditVehicleInwardPageClient() {
       if (error) throw error
       setLocations(data || [])
     } catch (error) {
-      console.error('Error loading locations:', error)
+      logger.error('Error loading locations', error, 'EditVehicleInwardPageClient')
       setLocations([])
     }
   }
@@ -232,7 +232,7 @@ export default function EditVehicleInwardPageClient() {
       if (error) throw error
       setVehicleTypes(data || [])
     } catch (error) {
-      console.error('Error loading vehicle types:', error)
+      logger.error('Error loading vehicle types', error, 'EditVehicleInwardPageClient')
       setVehicleTypes([])
     }
   }
@@ -258,7 +258,7 @@ export default function EditVehicleInwardPageClient() {
       if (error) throw error
       setDepartments(data || [])
     } catch (error) {
-      console.error('Error loading departments:', error)
+      logger.error('Error loading departments', error, 'EditVehicleInwardPageClient')
       setDepartments([])
     }
   }
@@ -293,6 +293,40 @@ export default function EditVehicleInwardPageClient() {
     if (!recordId) {
       alert('Invalid record ID')
       return
+    }
+
+    // Check for duplicate email if email is provided and changed
+    if (formData.email && formData.email.trim()) {
+      const tenantId = getCurrentTenantId()
+      const isSuper = isSuperAdmin()
+      
+      let emailCheckQuery = supabase
+        .from('vehicle_inward')
+        .select('id, customer_name, registration_number')
+        .eq('customer_email', formData.email.trim().toLowerCase())
+        .neq('id', recordId) // Exclude current record
+        .neq('status', 'delivered') // Only check active entries
+      
+      if (!isSuper && tenantId) {
+        emailCheckQuery = emailCheckQuery.eq('tenant_id', tenantId)
+      }
+      
+      const { data: existingEntries, error: emailCheckError } = await emailCheckQuery
+      
+      if (emailCheckError) {
+        logger.error('Error checking duplicate email', emailCheckError, 'EditVehicleInwardPageClient')
+        // Continue with submission if check fails (don't block user)
+      } else if (existingEntries && existingEntries.length > 0) {
+        const existingEntry = existingEntries[0]
+        const confirmMessage = `This email (${formData.email}) is already associated with another vehicle entry:\n\n` +
+          `Customer: ${existingEntry.customer_name}\n` +
+          `Vehicle: ${existingEntry.registration_number}\n\n` +
+          `Do you want to continue anyway?`
+        
+        if (!confirm(confirmMessage)) {
+          return
+        }
+      }
     }
 
     setIsSubmitting(true)
@@ -336,7 +370,7 @@ export default function EditVehicleInwardPageClient() {
         .eq('id', recordId)
 
       if (error) {
-        console.error('Error updating vehicle inward:', error)
+        logger.error('Error updating vehicle inward', error, 'EditVehicleInwardPageClient')
         throw error
       }
       
@@ -344,7 +378,7 @@ export default function EditVehicleInwardPageClient() {
       router.push('/vehicles')
 
     } catch (error: any) {
-      console.error('Error updating vehicle inward:', error)
+      logger.error('Error updating vehicle inward', error, 'EditVehicleInwardPageClient')
       alert(`Failed to update vehicle inward: ${error.message}`)
     } finally {
       setIsSubmitting(false)

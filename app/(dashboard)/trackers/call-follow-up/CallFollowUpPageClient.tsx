@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Phone, Clock, Play, X, CheckCircle, AlertCircle, Plus, Search, Filter, Edit, Trash, ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
 
 export default function CallFollowUpPageClient() {
   const [calls, setCalls] = useState<any[]>([])

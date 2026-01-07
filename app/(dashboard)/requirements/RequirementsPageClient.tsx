@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Search, Trash2, Edit, Upload, Send, X, Calendar, Car, FileText, CheckCircle, User, Clipboard, ChevronLeft, Eye } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { getCurrentTenantId, isSuperAdmin } from '@/lib/tenant-context'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
 
 export default function RequirementsPageClient() {
   const [requirements, setRequirements] = useState<any[]>([])
