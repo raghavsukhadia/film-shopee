@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { hasApiRouteAccess, UserRole } from '@/lib/helpers/rbac'
-import { exportRateLimiter } from '@/utils/rate-limiter'
-import { generateCSV, formatExpensesForCSV } from '@/utils/csv'
+import { exportRateLimiter } from '@/lib/utils/rate-limiter'
+import { generateCSV, formatExpensesForCSV } from '@/lib/utils/csv'
 
 // Helper function to get client IP
 function getClientIP(request: NextRequest): string {

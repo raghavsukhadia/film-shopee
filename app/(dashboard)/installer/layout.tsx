@@ -1,5 +1,5 @@
-import Sidebar from '@/components/sidebar'
-import Topbar from '@/components/topbar'
+import Sidebar from '@/components/layout/sidebar'
+import Topbar from '@/components/layout/topbar'
 
 interface InstallerLayoutProps {
   children: React.ReactNode
