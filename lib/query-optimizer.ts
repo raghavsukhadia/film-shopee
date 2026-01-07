@@ -8,8 +8,8 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
-import { getCurrentTenantId, isSuperAdmin } from './tenant-context'
-import { logger } from './logger'
+import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Optimized query builder that automatically:
