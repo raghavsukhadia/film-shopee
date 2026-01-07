@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod'
-import { logger } from './logger'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Sanitize string input to prevent XSS

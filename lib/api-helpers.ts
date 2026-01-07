@@ -8,8 +8,8 @@
  */
 
 import { NextResponse } from 'next/server'
-import { rateLimit, getClientId } from './rate-limiter'
-import { logger } from './logger'
+import { rateLimit, getClientId } from '@/lib/utils/rate-limiter'
+import { logger } from '@/lib/utils/logger'
 
 export interface ApiResponse<T = any> {
   success: boolean

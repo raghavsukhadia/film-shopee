@@ -10,7 +10,7 @@
  * 3. Set SENTRY_DSN in environment variables
  */
 
-import { logger } from './logger'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Initialize error tracking (Sentry)
