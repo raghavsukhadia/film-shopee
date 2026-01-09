@@ -1021,11 +1021,11 @@ export default function SettingsPageClient() {
 
   const loadDefaultTemplates = () => {
     const defaultTemplates = [
-      { event_type: 'vehicle_inward_created', template: '≡ƒÜù *New Vehicle Entry*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nStatus: Pending\n\nPlease check the dashboard for details.' },
-      { event_type: 'installation_complete', template: 'Γ£à *Installation Complete*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nAll products have been installed successfully.\n\nReady for accountant review.' },
-      { event_type: 'invoice_number_added', template: '≡ƒº╛ *Invoice Number Added*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nInvoice number has been set by accountant.\n\nPlease check the dashboard for details.' },
+      { event_type: 'vehicle_inward_created', template: '🚗 *New Vehicle Entry*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nStatus: Pending\n\nPlease check the dashboard for details.' },
+      { event_type: 'installation_complete', template: '✅ *Installation Complete*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nAll products have been installed successfully.\n\nReady for accountant review.' },
+      { event_type: 'invoice_number_added', template: '📄 *Invoice Number Added*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nInvoice number has been set by accountant.\n\nPlease check the dashboard for details.' },
       { event_type: 'accountant_completed', template: '✓ *Accountant Completed*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nInvoice processing completed.\n\nReady for delivery.' },
-      { event_type: 'vehicle_delivered', template: '≡ƒÄë *Vehicle Delivered*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nVehicle has been marked as delivered.\n\nThank you for your work!' },
+      { event_type: 'vehicle_delivered', template: '🎉 *Vehicle Delivered*\n\nVehicle: {{vehicleNumber}}\nCustomer: {{customerName}}\n\nVehicle has been marked as delivered.\n\nThank you for your work!' },
     ]
     setMessageTemplates(defaultTemplates as any)
     const templateMap = new Map<string, string>()
@@ -1937,7 +1937,7 @@ export default function SettingsPageClient() {
       
       // CRITICAL: If tenant_id is missing, fetch it from user's tenant_users relationship
       if (!isSuper && !tenantId) {
-        console.warn('ΓÜá∩╕Å tenant_id not found in sessionStorage, fetching from database...')
+        console.warn('⚠️ tenant_id not found in sessionStorage, fetching from database...')
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           const { data: tenantUser } = await supabase
@@ -1949,7 +1949,7 @@ export default function SettingsPageClient() {
           if (tenantUser?.tenant_id) {
             tenantId = tenantUser.tenant_id
             sessionStorage.setItem('current_tenant_id', tenantId)
-            console.log('Γ£à tenant_id fetched and set:', tenantId)
+            console.log('✅ tenant_id fetched and set:', tenantId)
           } else {
             alert('Cannot save vehicle type: Tenant ID is required. Please log out and log in again.')
             return
@@ -1966,7 +1966,7 @@ export default function SettingsPageClient() {
         return
       }
       
-      console.log('≡ƒÆ╛ Creating/updating vehicle type:', {
+      console.log('📝 Creating/updating vehicle type:', {
         name: vehicleTypeForm.name,
         is_active: vehicleTypeForm.is_active,
         tenantId,
@@ -2022,7 +2022,7 @@ export default function SettingsPageClient() {
           insertData.tenant_id = tenantId
         }
         
-        console.log('≡ƒôñ INSERTING vehicle_type with data:', JSON.stringify(insertData, null, 2))
+        console.log('➕ INSERTING vehicle_type with data:', JSON.stringify(insertData, null, 2))
         
         const { data: insertedData, error } = await supabase
           .from('vehicle_types')
@@ -2030,7 +2030,7 @@ export default function SettingsPageClient() {
           .select('id, name, tenant_id')
         
         if (insertedData) {
-          console.log('Γ£à INSERTED vehicle_type:', JSON.stringify(insertedData[0], null, 2))
+          console.log('✅ INSERTED vehicle_type:', JSON.stringify(insertedData[0], null, 2))
         }
         
         if (error) throw error
@@ -2059,7 +2059,7 @@ export default function SettingsPageClient() {
       
       // CRITICAL: If tenant_id is missing, fetch it from user's tenant_users relationship
       if (!isSuper && !tenantId) {
-        console.warn('ΓÜá∩╕Å tenant_id not found in sessionStorage, fetching from database...')
+        console.warn('⚠️ tenant_id not found in sessionStorage, fetching from database...')
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           const { data: tenantUser } = await supabase
@@ -2071,7 +2071,7 @@ export default function SettingsPageClient() {
           if (tenantUser?.tenant_id) {
             tenantId = tenantUser.tenant_id
             sessionStorage.setItem('current_tenant_id', tenantId)
-            console.log('Γ£à tenant_id fetched and set:', tenantId)
+            console.log('✅ tenant_id fetched and set:', tenantId)
           } else {
             alert('Cannot save department: Tenant ID is required. Please log out and log in again.')
             return
@@ -2088,7 +2088,7 @@ export default function SettingsPageClient() {
         return
       }
       
-      console.log('≡ƒÆ╛ Creating/updating department:', {
+      console.log('📝 Creating/updating department:', {
         name: departmentForm.name,
         is_active: departmentForm.is_active,
         color: departmentForm.color,
@@ -2154,7 +2154,7 @@ export default function SettingsPageClient() {
           insertData.tenant_id = tenantId
         }
         
-        console.log('≡ƒôñ INSERTING department with data:', JSON.stringify(insertData, null, 2))
+        console.log('➕ INSERTING department with data:', JSON.stringify(insertData, null, 2))
         
         const { data: insertedData, error } = await supabase
           .from('departments')
@@ -2162,7 +2162,7 @@ export default function SettingsPageClient() {
           .select('id, name, tenant_id')
         
         if (insertedData) {
-          console.log('Γ£à INSERTED department:', JSON.stringify(insertedData[0], null, 2))
+          console.log('✅ INSERTED department:', JSON.stringify(insertedData[0], null, 2))
         }
         
         if (error) throw error
@@ -2191,7 +2191,7 @@ export default function SettingsPageClient() {
       
       // CRITICAL: If tenant_id is missing, fetch it from user's tenant_users relationship
       if (!isSuper && !tenantId) {
-        console.warn('ΓÜá∩╕Å tenant_id not found in sessionStorage, fetching from database...')
+        console.warn('⚠️ tenant_id not found in sessionStorage, fetching from database...')
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           const { data: tenantUser } = await supabase
@@ -2203,7 +2203,7 @@ export default function SettingsPageClient() {
           if (tenantUser?.tenant_id) {
             tenantId = tenantUser.tenant_id
             sessionStorage.setItem('current_tenant_id', tenantId)
-            console.log('Γ£à tenant_id fetched and set:', tenantId)
+            console.log('✅ tenant_id fetched and set:', tenantId)
           } else {
             alert('Cannot save location: Tenant ID is required. Please log out and log in again.')
             return
@@ -2220,7 +2220,7 @@ export default function SettingsPageClient() {
         return
       }
       
-      console.log('≡ƒÆ╛ Creating/updating location:', {
+      console.log('📝 Creating/updating location:', {
         name: locationForm.name,
         address: locationForm.address,
         is_active: locationForm.is_active,
@@ -2286,7 +2286,7 @@ export default function SettingsPageClient() {
           insertData.tenant_id = tenantId
         }
         
-        console.log('≡ƒôñ INSERTING location with data:', JSON.stringify(insertData, null, 2))
+        console.log('➕ INSERTING location with data:', JSON.stringify(insertData, null, 2))
         
         const { data: insertedData, error } = await supabase
           .from('locations')
@@ -2294,7 +2294,7 @@ export default function SettingsPageClient() {
           .select('id, name, tenant_id')
         
         if (insertedData) {
-          console.log('Γ£à INSERTED location:', JSON.stringify(insertedData[0], null, 2))
+          console.log('✅ INSERTED location:', JSON.stringify(insertedData[0], null, 2))
         }
         
         if (error) throw error
@@ -4666,7 +4666,7 @@ export default function SettingsPageClient() {
                           
                           try {
                             const { whatsappService } = await import('@/lib/whatsapp-service')
-                            const { notificationWorkflow } = await import('@/lib/notification-workflow')
+                            const { notificationWorkflow } = await import('@/lib/services/notification-workflow')
                             
                             // Initialize with current config
                             await whatsappService.initialize(whatsappConfig)
@@ -4698,9 +4698,9 @@ export default function SettingsPageClient() {
                             const result = await whatsappService.sendWorkflowNotification(testEvent, recipients, supabase)
                             
                             if (result.sent > 0) {
-                              alert(`Γ£à Test notification sent successfully!\n\nSent: ${result.sent}\nFailed: ${result.failed}\n\nCheck your browser console (F12) for detailed logs.`)
+                              alert(`✅ Test notification sent successfully!\n\nSent: ${result.sent}\nFailed: ${result.failed}\n\nCheck your browser console (F12) for detailed logs.`)
                             } else {
-                              alert(`Γ¥î Test notification failed!\n\nSent: ${result.sent}\nFailed: ${result.failed}\n\nErrors:\n${result.errors.join('\n')}\n\nCheck your browser console (F12) for detailed logs.`)
+                              alert(`❌ Test notification failed!\n\nSent: ${result.sent}\nFailed: ${result.failed}\n\nErrors:\n${result.errors.join('\n')}\n\nCheck your browser console (F12) for detailed logs.`)
                             }
                           } catch (error: any) {
                             console.error('Test notification error:', error)
@@ -5232,7 +5232,7 @@ export default function SettingsPageClient() {
                           padding: '0.375rem 0.875rem',
                           backgroundColor: '#fef2f2',
                           borderRadius: '0.5rem'
-                        }}>ΓÜá Inactive - Payment Required</span>
+                        }}>⚠️ Inactive - Payment Required</span>
                       )}
                     </div>
                   </div>
@@ -5478,7 +5478,7 @@ export default function SettingsPageClient() {
                       marginTop: '1rem',
                       boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
                     }}>
-                      <strong style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9375rem' }}>≡ƒÆí Need Payment Details?</strong>
+                      <strong style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9375rem' }}>💡 Need Payment Details?</strong>
                       <p style={{ margin: 0, fontSize: '0.875rem', color: '#1e3a8a', lineHeight: '1.6' }}>
                         Contact our support team using the "Subscription Support" section below to get bank account details and payment instructions.
                       </p>

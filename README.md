@@ -20,10 +20,15 @@ film-shopee/
 │   ├── vehicles/         # Vehicle-related components
 │   └── ui/               # UI primitives (shadcn/ui)
 ├── docs/                  # Documentation
+│   ├── bugs/             # Bug reports
 │   ├── deployment/       # Deployment guides
+│   ├── features/         # Feature documentation
+│   ├── guides/           # Development guides
+│   ├── handover/         # Project handover docs
+│   ├── progress/          # Project status & progress
 │   ├── setup/            # Setup guides
 │   ├── troubleshooting/  # Troubleshooting guides
-│   └── features/        # Feature documentation
+│   └── README.md         # Documentation index
 ├── hooks/                 # Custom React hooks
 ├── lib/                   # Library code
 │   ├── helpers/          # Helper functions
@@ -33,6 +38,9 @@ film-shopee/
 ├── types/                 # TypeScript type definitions
 ├── database/             # Database migration scripts
 ├── scripts/               # Utility scripts
+│   ├── deployment/       # Deployment scripts
+│   ├── maintenance/      # Maintenance scripts
+│   └── setup/            # Setup scripts
 └── public/               # Static assets
 ```
 
@@ -65,9 +73,13 @@ npm start
 
 ## 📚 Documentation
 
+See [Documentation Index](./docs/README.md) for complete documentation.
+
+**Quick Links:**
 - [User Manual](./docs/features/USER_MANUAL.md)
 - [Deployment Guide](./docs/deployment/DEPLOYMENT_CHECKLIST.md)
 - [Setup Guide](./docs/setup/QUICK_START.md)
+- [Project Status](./docs/progress/IMPLEMENTATION_STATUS.md)
 - [Troubleshooting](./docs/troubleshooting/)
 
 ## 🏗️ Architecture

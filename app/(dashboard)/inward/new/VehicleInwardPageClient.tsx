@@ -6,6 +6,8 @@ import { Car, Save, ArrowLeft, Plus, Trash2, Calendar, Clock, User, Phone, Build
 import { createClient } from '@/lib/supabase/client'
 import { getCurrentTenantId, isSuperAdmin } from '@/lib/helpers/tenant-context'
 import { logger } from '@/lib/utils/logger'
+import { useToast } from '@/components/ui/use-toast'
+import { useFormAutoSave } from '@/hooks/useFormAutoSave'
 
 interface ProductItem {
   product: string
@@ -390,7 +392,7 @@ export default function VehicleInwardPageClient() {
       
       // Send WhatsApp notification
       try {
-        const { notificationWorkflow } = await import('@/lib/notification-workflow')
+        const { notificationWorkflow } = await import('@/lib/services/notification-workflow')
         await notificationWorkflow.notifyVehicleCreated(data.id, { ...payload, id: data.id })
       } catch (notifError) {
         logger.error('Error sending notification', notifError, 'VehicleInwardPageClient')
